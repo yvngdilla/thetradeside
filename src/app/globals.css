@@ -29,27 +29,7 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #131916;
-    --sheet: #1a211d;
-    --plaster: #222a25;
-    --rule: #2f3833;
-    --control: #737b75;
-    --travertine: #4d544f;
-    --ink: #efe8e1;
-    --muted: #a9a39b;
-    --forest: #9cc2ac;
-    --on-forest: #10201a;
-    --forest-wash: #1f2e26;
-    --clay: #e0a08c;
-    --alert: #f0a993;
-    --alert-wash: #3a231c;
-    --on-alert: #2a120c;
-    --shadow-field-focus: 0 0 0 3px rgba(156, 194, 172, 0.24);
-    color-scheme: dark;
-  }
-}
+/* Light only for now. The dark palette in the design system is parked until it's revisited. */
 
 @theme inline {
   --color-paper: var(--paper);
