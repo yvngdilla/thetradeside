@@ -6,6 +6,7 @@ import { getWorkspace, loadProfileAndSigner } from "@/lib/workspace";
 import { getOutlookConnection } from "@/lib/outlook";
 import { has } from "@/lib/env";
 import { profileGaps, type Filing, type TeamDocument, type Vendor } from "@/lib/types";
+import { certificateEmail } from "@/lib/filing";
 import { StatusTag, METHOD_LABELS } from "@/components/status-tag";
 import { AutoRefresh } from "@/components/ui";
 import { cancelFiling, confirmPortalSubmitted, deleteVendor, rerunResearch } from "@/app/actions";
@@ -41,6 +42,7 @@ export default async function VendorPage(props: PageProps<"/vendors/[id]">) {
   const docs = (docRows ?? []) as TeamDocument[];
   const active = filings.find((f) => ACTIVE.includes(f.status));
   const gaps = profileGaps(profile, signer);
+  const emailPreview = profile && signer && !gaps.length ? certificateEmail(vendor, profile, signer, []) : null;
   const busy = vendor.status === "researching" || active?.status === "preparing" || active?.status === "portal_running";
 
   return (
@@ -189,6 +191,8 @@ export default async function VendorPage(props: PageProps<"/vendors/[id]">) {
               docs={docs.map((d) => ({ id: d.id, label: d.label }))}
               gaps={gaps}
               outlookEmail={outlook?.email ?? null}
+              userEmail={ws.email}
+              emailPreview={emailPreview ? { subject: emailPreview.subject, text: emailPreview.text } : null}
               portalEnabled={has("BROWSERBASE_API_KEY")}
               lastFiled={filings.find((f) => ["sent", "submitted", "manual"].includes(f.status)) ?? null}
             />

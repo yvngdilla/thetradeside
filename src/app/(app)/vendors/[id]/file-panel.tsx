@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { fileByEmail, fileByPortal, markFiledManually, type ActionState } from "@/app/actions";
 import { FormMessage, SubmitButton } from "@/components/ui";
 import type { Filing, Vendor } from "@/lib/types";
+import { APP_NAME } from "@/lib/brand";
 
 type Way = "email" | "portal" | "manual";
 
@@ -13,6 +14,8 @@ export function FilePanel({
   docs,
   gaps,
   outlookEmail,
+  userEmail,
+  emailPreview,
   portalEnabled,
   lastFiled,
 }: {
@@ -20,6 +23,8 @@ export function FilePanel({
   docs: { id: string; label: string }[];
   gaps: string[];
   outlookEmail: string | null;
+  userEmail: string;
+  emailPreview: { subject: string; text: string } | null;
   portalEnabled: boolean;
   lastFiled: Filing | null;
 }) {
@@ -93,7 +98,7 @@ export function FilePanel({
             ))}
           </div>
           {way === "email" ? (
-            <EmailForm vendor={vendor} docs={docs} outlookEmail={outlookEmail} />
+            <EmailForm vendor={vendor} docs={docs} outlookEmail={outlookEmail} userEmail={userEmail} preview={emailPreview} />
           ) : way === "portal" ? (
             <PortalForm vendor={vendor} docs={docs} enabled={portalEnabled} />
           ) : (
@@ -128,30 +133,68 @@ function DocumentChoices({ docs, required }: { docs: { id: string; label: string
   );
 }
 
-function EmailForm({ vendor, docs, outlookEmail }: { vendor: Vendor; docs: { id: string; label: string }[]; outlookEmail: string | null }) {
+function EmailForm({
+  vendor,
+  docs,
+  outlookEmail,
+  userEmail,
+  preview,
+}: {
+  vendor: Vendor;
+  docs: { id: string; label: string }[];
+  outlookEmail: string | null;
+  userEmail: string;
+  preview: { subject: string; text: string } | null;
+}) {
   const [state, action] = useActionState<ActionState, FormData>(fileByEmail, undefined);
-  if (!outlookEmail) {
-    return (
-      <p className="mt-4 text-sm">
-        Connect your Outlook in{" "}
-        <Link href="/settings#email" className="underline underline-offset-4 font-semibold">
-          Settings
-        </Link>{" "}
-        to create the email draft. Or use Other to download the certificate and send it yourself.
-      </p>
-    );
-  }
+  const [delivery, setDelivery] = useState<"send" | "outlook">("send");
   return (
     <form action={action} className="mt-4">
       <input type="hidden" name="vendor_id" value={vendor.id} />
+      <input type="hidden" name="delivery" value={delivery} />
       <label htmlFor="to" className="label">
-        Send to
+        Vendor email
       </label>
       <input id="to" name="to" type="email" required defaultValue={vendor.trade_email ?? ""} className="field" />
       <DocumentChoices docs={docs} required={vendor.required_documents} />
-      <p className="hint mt-3">Creates a draft in {outlookEmail} with the signed certificate attached. You press Send in Outlook.</p>
+      <label htmlFor="note" className="label mt-4">
+        Add a note <span className="font-normal text-muted">(optional)</span>
+      </label>
+      <textarea id="note" name="note" rows={2} className="field" placeholder="Like a project name or your account number" />
+      {preview ? (
+        <details className="mt-3 text-sm">
+          <summary className="cursor-pointer text-muted hover:text-ink">Preview the email</summary>
+          <div className="mt-2 border-l-2 border-rule pl-3">
+            <p className="font-semibold">{preview.subject}</p>
+            <p className="whitespace-pre-line mt-2 text-muted">{preview.text}</p>
+            <p className="mt-2 text-muted">Attached: signed resale certificate (PDF)</p>
+          </div>
+        </details>
+      ) : null}
+      {outlookEmail ? (
+        <fieldset className="mt-4 text-sm space-y-1.5">
+          <legend className="label">Send it</legend>
+          <label className="flex items-center gap-2">
+            <input type="radio" name="_delivery" checked={delivery === "send"} onChange={() => setDelivery("send")} />
+            Now, from {APP_NAME}
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="radio" name="_delivery" checked={delivery === "outlook"} onChange={() => setDelivery("outlook")} />
+            As a draft in my Outlook ({outlookEmail})
+          </label>
+        </fieldset>
+      ) : null}
+      <p className="hint mt-3">
+        {delivery === "send"
+          ? `Sent from ${APP_NAME} with the signed certificate attached. Replies go to ${userEmail}, and you get a copy.`
+          : `Creates a draft in ${outlookEmail} with the certificate attached. You press Send in Outlook.`}
+      </p>
       <div className="mt-4">
-        <SubmitButton pending="Creating draft">Create Outlook draft</SubmitButton>
+        {delivery === "send" ? (
+          <SubmitButton pending="Sending">Send to vendor</SubmitButton>
+        ) : (
+          <SubmitButton pending="Creating draft">Create Outlook draft</SubmitButton>
+        )}
       </div>
       <FormMessage state={state} />
     </form>

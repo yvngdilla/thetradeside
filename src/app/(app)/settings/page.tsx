@@ -72,10 +72,14 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
         <DocumentForm />
       </Section>
 
-      <Section id="email" title="Email" intro="Certificates are emailed as drafts in your own Outlook, so they come from you and you decide when to send.">
+      <Section
+        id="email"
+        title="Email"
+        intro="Certificates are sent from Trade Side under your firm's name. Replies come to your own inbox and you get a copy of each one. If you'd rather send from Outlook yourself, connect it here to get drafts instead."
+      >
         {outlookMsg ? <p className="mb-3 text-sm text-chip">{outlookMsg}</p> : null}
         {!has("MICROSOFT_CLIENT_ID") ? (
-          <p className="text-sm text-muted">Outlook isn&rsquo;t set up for this site yet.</p>
+          <p className="text-sm text-muted">Nothing to set up. Outlook drafts aren&rsquo;t available on this site yet.</p>
         ) : outlook ? (
           <div className="flex flex-wrap items-center gap-4">
             <p>
@@ -86,8 +90,8 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
             </form>
           </div>
         ) : (
-          <a href="/api/outlook/connect" className="btn btn-primary">
-            Connect Outlook
+          <a href="/api/outlook/connect" className="btn btn-quiet">
+            Connect Outlook (optional)
           </a>
         )}
       </Section>

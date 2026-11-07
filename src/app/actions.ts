@@ -10,6 +10,9 @@ import { runResearchJob } from "@/lib/jobs/research-job";
 import { releaseBrowser, runPortalJob } from "@/lib/jobs/portal-job";
 import { buildCertificate, certificateEmail, loadDocuments, loadFilingContext, markEmailSent, paths, upload, addStep } from "@/lib/filing";
 import { createOutlookDraft, disconnectOutlook, findSentFiling } from "@/lib/outlook";
+import { sendMail, systemEmail } from "@/lib/mailer";
+import { env } from "@/lib/env";
+import { APP_NAME } from "@/lib/brand";
 
 export type ActionState = { error?: string; ok?: string; vendorId?: string } | undefined;
 
@@ -115,10 +118,17 @@ async function newFiling(teamId: string, vendorId: string, userId: string, metho
   return data.id as string;
 }
 
+/**
+ * Emails the certificate to the vendor. By default it's sent from Trade Side's
+ * address with the designer as reply-to and in copy, so it works with any email
+ * provider. With delivery=outlook it becomes a draft in the designer's Outlook instead.
+ */
 export async function fileByEmail(_: ActionState, fd: FormData): Promise<ActionState> {
   const ws = await getWorkspace();
   const vendorId = str(fd, "vendor_id");
-  const to = str(fd, "to");
+  const to = str(fd, "to").toLowerCase();
+  const note = str(fd, "note");
+  const delivery = str(fd, "delivery") === "outlook" ? "outlook" : "send";
   const documentIds = fd.getAll("documents").map(String);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return { error: "Enter the vendor's email address." };
 
@@ -129,26 +139,51 @@ export async function fileByEmail(_: ActionState, fd: FormData): Promise<ActionS
     filingId = await newFiling(ws.teamId, vendorId, ws.userId, "email", documentIds);
     const cert = await buildCertificate(ctx, filingId);
     const docs = await loadDocuments(ws.teamId, documentIds);
-    const { subject, html } = certificateEmail(ctx.vendor, ctx.profile, ctx.signer, docs.map((d) => d.label));
-    const draft = await createOutlookDraft({
-      userId: ws.userId,
-      filingId,
+    const { subject, html, text } = certificateEmail(ctx.vendor, ctx.profile, ctx.signer, docs.map((d) => d.label), note);
+    const attachments = [
+      { filename: cert.fileName, contentType: "application/pdf", bytes: cert.bytes },
+      ...docs.map((d) => ({ filename: d.file_name, contentType: d.mime_type, bytes: d.bytes })),
+    ];
+
+    if (delivery === "outlook") {
+      const draft = await createOutlookDraft({
+        userId: ws.userId,
+        filingId,
+        to,
+        subject,
+        html,
+        attachments: attachments.map((a) => ({ name: a.filename, contentType: a.contentType, bytes: a.bytes })),
+      });
+      await admin
+        .from("filings")
+        .update({ status: "draft_created", certificate_path: cert.path, form_code: cert.formCode, outlook_message_id: draft.id, outlook_web_link: draft.webLink, sent_to: to })
+        .eq("id", filingId);
+      await addStep(filingId, `Draft to ${to} saved in Outlook. Send it from Outlook when you're ready.`);
+      await admin.from("vendors").update({ status: "in_progress", trade_email: to }).eq("id", vendorId);
+      revalidatePath(`/vendors/${vendorId}`);
+      return { ok: "Draft saved in Outlook" };
+    }
+
+    await sendMail({
       to,
+      cc: [ws.email],
+      replyTo: ws.email,
+      fromName: `${ctx.profile.business_name} via ${APP_NAME}`,
+      fromLocal: "certificates",
       subject,
       html,
-      attachments: [
-        { name: cert.fileName, contentType: "application/pdf", bytes: cert.bytes },
-        ...docs.map((d) => ({ name: d.file_name, contentType: d.mime_type, bytes: d.bytes })),
-      ],
+      text,
+      attachments,
     });
+    const now = new Date().toISOString();
     await admin
       .from("filings")
-      .update({ status: "draft_created", certificate_path: cert.path, form_code: cert.formCode, outlook_message_id: draft.id, outlook_web_link: draft.webLink, sent_to: to })
+      .update({ status: "sent", certificate_path: cert.path, form_code: cert.formCode, sent_to: to, completed_at: now })
       .eq("id", filingId);
-    await addStep(filingId, `Draft to ${to} saved in Outlook. Send it from Outlook when you're ready.`);
-    await admin.from("vendors").update({ status: "in_progress", trade_email: to }).eq("id", vendorId);
+    await addStep(filingId, `Emailed to ${to}, with a copy to ${ws.email}. Replies go to ${ws.email}.`);
+    await admin.from("vendors").update({ status: "filed", filed_at: now, filed_by: ws.userId, trade_email: to }).eq("id", vendorId);
     revalidatePath(`/vendors/${vendorId}`);
-    return { ok: "Draft saved in Outlook" };
+    return { ok: `Sent to ${to}` };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (filingId) await admin.from("filings").update({ status: "failed", error: msg }).eq("id", filingId);
@@ -315,7 +350,27 @@ export async function inviteMember(_: ActionState, fd: FormData): Promise<Action
   const { error } = await supabase.from("team_members").insert({ team_id: ws.teamId, email, role: "member", invited_by: ws.userId });
   if (error) return { error: error.code === "23505" ? "That person is already in this workspace." : "Couldn't add that person." };
   revalidatePath("/settings");
-  return { ok: `${email} can now sign in` };
+
+  const url = `${env.appUrl()}/login`;
+  try {
+    await sendMail({
+      to: email,
+      replyTo: ws.email,
+      subject: `You've been added to ${ws.teamName} on ${APP_NAME}`,
+      html: systemEmail(
+        `Join ${ws.teamName}`,
+        [
+          `${ws.email} added you to ${ws.teamName} on ${APP_NAME}, where the team files resale certificates and tracks vendor trade accounts.`,
+          `Sign in with this email address (${email}). No password needed.`,
+        ],
+        { label: "Sign in", url },
+      ),
+      text: `${ws.email} added you to ${ws.teamName} on ${APP_NAME}. Sign in with ${email} at ${url}`,
+    });
+  } catch {
+    return { ok: `${email} was added, but the invite email didn't send. Ask them to sign in at ${url}.` };
+  }
+  return { ok: `Invite sent to ${email}` };
 }
 
 export async function removeMember(email: string) {

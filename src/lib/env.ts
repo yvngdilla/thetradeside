@@ -33,9 +33,13 @@ export const env = {
 
   cronSecret: () => required("CRON_SECRET"),
 
-  // Who may create a new workspace. "open" lets anyone sign up; "invite" (default)
-  // only lets people in already-invited emails or BOOTSTRAP_OWNER_EMAILS in.
-  signupMode: (): "open" | "invite" => (process.env.SIGNUP_MODE === "open" ? "open" : "invite"),
+  // Email (sign-in links, invites, certificates) is sent through Resend from this domain.
+  resendApiKey: () => required("RESEND_API_KEY"),
+  emailDomain: () => process.env.EMAIL_DOMAIN ?? "thetradeside.com",
+
+  // Who may create a new workspace. "open" (default) lets any firm sign up;
+  // "invite" only lets in invited emails and BOOTSTRAP_OWNER_EMAILS.
+  signupMode: (): "open" | "invite" => (process.env.SIGNUP_MODE === "invite" ? "invite" : "open"),
   bootstrapOwnerEmails: () =>
     (process.env.BOOTSTRAP_OWNER_EMAILS ?? "")
       .split(",")

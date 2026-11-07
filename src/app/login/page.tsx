@@ -22,7 +22,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
       <section className="px-8 py-12 md:px-14 md:py-16 flex items-center">
         <div className="w-full max-w-sm">
           <h2 className="font-display text-3xl">Sign in</h2>
-          <p className="text-muted mt-2">We&rsquo;ll email you a link. No password needed.</p>
+          <p className="text-muted mt-2">We&rsquo;ll email you a link. No password needed. New here? Use the same form to set up your firm.</p>
           {error ? <p className="mt-4 text-sm text-oxblood">That link expired or was already used. Send a new one.</p> : null}
           <LoginForm />
         </div>

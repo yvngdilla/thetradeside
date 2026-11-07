@@ -68,13 +68,20 @@ function escapeHtml(s: string) {
 }
 
 /** The cover email. Plain and short, written to read like the designer wrote it. */
-export function certificateEmail(vendor: Vendor, profile: BusinessProfile, signer: Signer, documentLabels: string[]) {
+export function certificateEmail(
+  vendor: Vendor,
+  profile: BusinessProfile,
+  signer: Signer,
+  documentLabels: string[],
+  note = "",
+) {
   const vendorName = vendor.display_name || vendor.seller_name || vendor.domain;
   const subject = `Resale certificate and trade account: ${profile.business_name}`;
   const extras = documentLabels.length ? ` I've also included our ${joinList(documentLabels.map((l) => l.toLowerCase()))}.` : "";
   const paragraphs = [
     `Hello ${vendorName} team,`,
     `Attached is the California resale certificate for ${profile.business_name}.${extras} Please keep it on file for our purchases and set us up with a trade account if we don't have one yet.`,
+    note.trim(),
     profile.email_note,
     `Let me know if you need anything else from us.`,
   ].filter(Boolean);
@@ -83,7 +90,8 @@ export function certificateEmail(vendor: Vendor, profile: BusinessProfile, signe
   const html =
     paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("") +
     `<p>Thank you,<br>${signature.map(escapeHtml).join("<br>")}</p>`;
-  return { subject, html };
+  const text = `${paragraphs.join("\n\n")}\n\nThank you,\n${signature.join("\n")}`;
+  return { subject, html, text };
 }
 
 function joinList(items: string[]) {
