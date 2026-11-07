@@ -279,3 +279,80 @@ a.link {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+
+/* Motion: quiet and purposeful. All of it stops under prefers-reduced-motion (above). */
+
+/* "Looking up": the hollow dot breathes. */
+.tag-research::before {
+  animation: ts-breathe 1.6s ease-in-out infinite;
+}
+@keyframes ts-breathe {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* A row being looked up gets a slow forest line sweeping along its base. */
+.row-researching {
+  position: relative;
+  overflow: hidden;
+}
+.row-researching::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, var(--forest), transparent);
+  opacity: 0.55;
+  animation: ts-sweep 1.8s ease-in-out infinite;
+}
+@keyframes ts-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(340%); }
+}
+
+/* A newly added vendor arrives with a soft wash that fades. */
+.row-arrive {
+  animation: ts-arrive 1.6s ease-out both;
+}
+@keyframes ts-arrive {
+  0% { opacity: 0; transform: translateY(-6px); background: var(--forest-wash); }
+  25% { opacity: 1; transform: none; background: var(--forest-wash); }
+  100% { background: transparent; }
+}
+
+/* When the lookup finishes, the row flashes once. */
+.row-done {
+  animation: ts-done 1.4s ease-out both;
+}
+@keyframes ts-done {
+  0% { background: var(--forest-wash); }
+  100% { background: transparent; }
+}
+
+/* Lookup checklist on the vendor page */
+.step-item {
+  animation: ts-step-in 300ms ease-out both;
+}
+@keyframes ts-step-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.step-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rule);
+  border-top-color: var(--forest);
+  animation: ts-turn 0.9s linear infinite;
+}
+@keyframes ts-turn {
+  to { transform: rotate(360deg); }
+}
+
+/* A field we just filled in from a document, so it's easy to check. */
+.field.field-filled {
+  background: var(--forest-wash);
+  border-color: var(--forest);
+}

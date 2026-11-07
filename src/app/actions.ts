@@ -3,14 +3,15 @@
 import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createAdminClient, createUserClient } from "@/lib/supabase/server";
+import { BUCKET, createAdminClient, createUserClient } from "@/lib/supabase/server";
 import { getWorkspace } from "@/lib/workspace";
-import { normalizeDomain } from "@/lib/domain";
+import { normalizeDomain, startingPage } from "@/lib/domain";
 import { runResearchJob } from "@/lib/jobs/research-job";
 import { releaseBrowser, runPortalJob } from "@/lib/jobs/portal-job";
 import { buildCertificate, certificateEmail, loadDocuments, loadFilingContext, markEmailSent, paths, upload, addStep } from "@/lib/filing";
 import { createOutlookDraft, disconnectOutlook, findSentFiling } from "@/lib/outlook";
 import { sendMail, systemEmail } from "@/lib/mailer";
+import { DOCUMENT_LABELS, extractProfile, type ExtractedProfile } from "@/lib/extract-profile";
 import { env } from "@/lib/env";
 import { APP_NAME } from "@/lib/brand";
 
@@ -22,8 +23,11 @@ const str = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim();
 
 export async function addVendor(_: ActionState, fd: FormData): Promise<ActionState> {
   const ws = await getWorkspace();
-  const domain = normalizeDomain(str(fd, "domain"));
-  if (!domain) return { error: "Enter a vendor website, like arteriorshome.com." };
+  const pasted = str(fd, "domain");
+  const domain = normalizeDomain(pasted);
+  if (!domain) return { error: "Paste a link to the vendor's website, like arteriorshome.com." };
+  // Keep the exact page they pasted (often the trade program page) as the lookup's first stop.
+  const firstPage = startingPage(pasted);
 
   const supabase = await createUserClient();
   const { data: existing } = await supabase
@@ -42,7 +46,7 @@ export async function addVendor(_: ActionState, fd: FormData): Promise<ActionSta
 
   const { data: vendor, error } = await supabase
     .from("vendors")
-    .insert({ team_id: ws.teamId, domain, display_name: domain, created_by: ws.userId })
+    .insert({ team_id: ws.teamId, domain, display_name: domain, created_by: ws.userId, trade_url: firstPage })
     .select("id")
     .single();
   if (error || !vendor) return { error: "Couldn't add that vendor. Try again." };
@@ -311,33 +315,67 @@ export async function saveSigner(_: ActionState, fd: FormData): Promise<ActionSt
 }
 
 const ALLOWED_DOC_TYPES = ["application/pdf", "image/png", "image/jpeg"];
+const MAX_ATTACH_BYTES = 2_500_000; // keeps certificate emails under provider limits
 
+/** Saves a document into one of the standard slots (or a named "other" one), replacing what was there. */
 export async function uploadDocument(_: ActionState, fd: FormData): Promise<ActionState> {
   const ws = await getWorkspace();
   const file = fd.get("file");
   const label = str(fd, "label");
   if (!(file instanceof File) || file.size === 0) return { error: "Choose a file." };
-  if (!label) return { error: "Name the document, like \"Seller's permit\"." };
+  if (!label) return { error: "Give the document a name, like \"Insurance certificate\"." };
   if (!ALLOWED_DOC_TYPES.includes(file.type)) return { error: "Upload a PDF, PNG or JPG." };
-  if (file.size > 2_500_000) return { error: "Keep documents under 2.5 MB so they fit in an email." };
-
-  const id = crypto.randomUUID();
-  const safeName = file.name.replace(/[^\w.\-]+/g, "_");
-  const path = paths.document(ws.teamId, id, safeName);
-  await upload(path, new Uint8Array(await file.arrayBuffer()), file.type);
-  const supabase = await createUserClient();
-  const { error } = await supabase.from("team_documents").insert({
-    id, team_id: ws.teamId, label, file_path: path, file_name: safeName, mime_type: file.type, size_bytes: file.size, created_by: ws.userId,
-  });
-  if (error) return { error: "Couldn't save the document." };
+  if (file.size > MAX_ATTACH_BYTES) return { error: "That file is over 2.5 MB. Use a smaller scan so it fits in vendor emails." };
+  const saved = await saveTeamDocument(ws, label, file.name, file.type, new Uint8Array(await file.arrayBuffer()));
+  if (!saved) return { error: "Couldn't save the document." };
   revalidatePath("/settings");
-  return { ok: `${label} added` };
+  return { ok: `${label} saved` };
+}
+
+async function saveTeamDocument(ws: { teamId: string; userId: string }, label: string, fileName: string, mime: string, bytes: Uint8Array) {
+  const supabase = await createUserClient();
+  // One file per slot: replace any earlier upload with the same name.
+  await supabase.from("team_documents").delete().eq("team_id", ws.teamId).eq("label", label);
+  const id = crypto.randomUUID();
+  const safeName = fileName.replace(/[^\w.\-]+/g, "_");
+  const path = paths.document(ws.teamId, id, safeName);
+  await upload(path, bytes, mime);
+  const { error } = await supabase.from("team_documents").insert({
+    id, team_id: ws.teamId, label, file_path: path, file_name: safeName, mime_type: mime, size_bytes: bytes.byteLength, created_by: ws.userId,
+  });
+  return !error;
+}
+
+export type ExtractState = { error?: string; values?: ExtractedProfile; savedAs?: string | null; fileName?: string } | undefined;
+
+/**
+ * Reads an uploaded resale certificate, seller's permit or business license and
+ * returns what it found so the Settings form can fill in for her to check.
+ * A permit or license is also saved to Documents, since vendors ask for those.
+ */
+export async function fillFromDocument(_: ExtractState, fd: FormData): Promise<ExtractState> {
+  const ws = await getWorkspace();
+  const file = fd.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose a file." };
+  if (!ALLOWED_DOC_TYPES.includes(file.type)) return { error: "Upload a PDF, PNG or JPG." };
+  if (file.size > 4_000_000) return { error: "That file is over 4 MB. Try a smaller scan or a PDF." };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const { kind, values } = await extractProfile(bytes, file.type);
+  if (!Object.keys(values).length) {
+    return { error: "We couldn't read any details from that file. Try a clearer scan, or fill them in below." };
+  }
+  const label = DOCUMENT_LABELS[kind];
+  const kept = !!label && file.size <= MAX_ATTACH_BYTES && (await saveTeamDocument(ws, label, file.name, file.type, bytes));
+  if (kept) revalidatePath("/settings");
+  return { values, savedAs: kept ? label : null, fileName: file.name };
 }
 
 export async function deleteDocument(id: string) {
   const ws = await getWorkspace();
   const supabase = await createUserClient();
+  const { data: doc } = await supabase.from("team_documents").select("file_path").eq("id", id).eq("team_id", ws.teamId).maybeSingle();
   await supabase.from("team_documents").delete().eq("id", id).eq("team_id", ws.teamId);
+  if (doc?.file_path) await createAdminClient().storage.from(BUCKET).remove([doc.file_path]);
   revalidatePath("/settings");
 }
 

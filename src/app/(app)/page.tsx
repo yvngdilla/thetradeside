@@ -29,6 +29,8 @@ export default async function VendorsPage(props: PageProps<"/">) {
     loadProfileAndSigner(ws),
   ]);
   const vendors = (data ?? []) as Vendor[];
+  // Server render time, used once to decide which rows animate.
+  const now = new Date().getTime();
   const gaps = profileGaps(profile, signer);
   const counts = {
     all: vendors.length,
@@ -46,7 +48,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
       <section className="max-w-2xl">
         <h1 className="t-title">Vendors</h1>
         <p className="text-muted mt-2">
-          Add a vendor by its website. If you&rsquo;ve already filed with them, you&rsquo;ll see it right away.
+          Paste a link to any page on a vendor&rsquo;s website. If you&rsquo;ve already filed with them, you&rsquo;ll see it right away.
         </p>
         <AddVendorForm />
       </section>
@@ -93,7 +95,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
         ) : (
           <ul className="divide-y divide-rule">
             {shown.map((v) => (
-              <li key={v.id}>
+              <li key={v.id} className={rowMotion(v, now)}>
                 <Link href={`/vendors/${v.id}`} className="grid grid-cols-[1fr_auto] sm:grid-cols-[minmax(0,2fr)_10rem_9rem_8rem] items-center gap-x-6 gap-y-1 py-4 group">
                   <div className="min-w-0">
                     <p className="t-name truncate group-hover:text-forest">{v.display_name || v.domain}</p>
@@ -114,4 +116,14 @@ export default async function VendorsPage(props: PageProps<"/">) {
       </section>
     </div>
   );
+}
+
+/** Motion for a row: arriving when just added, a sweep while looking up, a flash when the lookup just finished. */
+function rowMotion(v: Vendor, now: number): string {
+  if (v.status === "researching") {
+    return now - new Date(v.created_at).getTime() < 6000 ? "row-researching row-arrive" : "row-researching";
+  }
+  const justAdded = now - new Date(v.created_at).getTime() < 5 * 60_000;
+  const justFinished = now - new Date(v.updated_at).getTime() < 4000;
+  return justAdded && justFinished ? "row-done" : "";
 }

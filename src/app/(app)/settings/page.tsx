@@ -4,8 +4,8 @@ import { getWorkspace, loadProfileAndSigner } from "@/lib/workspace";
 import { getOutlookConnection } from "@/lib/outlook";
 import { has } from "@/lib/env";
 import type { TeamDocument } from "@/lib/types";
-import { deleteDocument, disconnectOutlookAction, removeMember } from "@/app/actions";
-import { DocumentForm, InviteForm, ProfileForm, SignerForm } from "./forms";
+import { disconnectOutlookAction, removeMember } from "@/app/actions";
+import { DocumentSlots, FillFromDocument, FillProvider, InviteForm, ProfileForm, SignerForm } from "./forms";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -33,6 +33,7 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
     signatureUrl = data?.signedUrl ?? null;
   }
 
+  const filled = typeof sp.filled === "string" ? Number(sp.filled) || 0 : 0;
   const outlookMsg = typeof sp.outlook === "string" ? OUTLOOK_MESSAGES[sp.outlook] : null;
 
   return (
@@ -46,37 +47,30 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
         <a href="#team" className="hover:text-ink">Team</a>
       </nav>
       {sp.welcome ? (
-        <p className="mt-3 text-muted">Fill in your certificate details once. Every certificate is made from them.</p>
+        <p className="mt-5 rounded-[var(--radius-md)] bg-forest-wash text-forest px-4 py-3 text-sm max-w-prose">
+          {filled
+            ? `Your workspace is ready. We filled in ${filled} details from your document and saved them. Check them below, add your signature, and you can start adding vendors.`
+            : "Your workspace is ready. Fill in your certificate details once and every certificate is made from them. The quickest way is to upload a certificate you've filed before."}
+        </p>
       ) : null}
 
-      <Section id="business" title="Certificate details" intro="Shared by everyone in your workspace. These go on every certificate.">
-        <ProfileForm profile={profile} />
-      </Section>
+      <FillProvider>
+        <Section id="business" title="Certificate details" intro="Shared by everyone in your workspace. These go on every certificate.">
+          <FillFromDocument />
+          <ProfileForm profile={profile} />
+        </Section>
 
-      <Section id="signature" title="Your signature" intro="Only you can sign with your signature. Each person in the workspace adds their own.">
-        <SignerForm signer={signer} signatureUrl={signatureUrl} />
-      </Section>
+        <Section id="signature" title="Your signature" intro="Only you can sign with your signature. Each person in the workspace adds their own.">
+          <SignerForm signer={signer} signatureUrl={signatureUrl} />
+        </Section>
+      </FillProvider>
 
       <Section
         id="documents"
         title="Documents"
-        intro="Files some vendors ask for alongside the certificate, like a copy of your seller's permit, business license or W-9."
+        intro="Some vendors ask for these alongside the certificate. Add them once, then tick the ones to include when you file with a vendor."
       >
-        <ul className="divide-y divide-rule border-y border-rule mb-6">
-          {((docs ?? []) as TeamDocument[]).map((d) => (
-            <li key={d.id} className="flex items-center gap-4 py-3">
-              <div className="min-w-0">
-                <p className="font-semibold">{d.label}</p>
-                <p className="text-sm text-muted truncate">{d.file_name}</p>
-              </div>
-              <form action={deleteDocument.bind(null, d.id)} className="ml-auto">
-                <button className="text-sm text-muted hover:text-alert">Remove</button>
-              </form>
-            </li>
-          ))}
-          {!docs?.length ? <li className="py-3 text-sm text-muted">No documents yet.</li> : null}
-        </ul>
-        <DocumentForm />
+        <DocumentSlots docs={(docs ?? []) as TeamDocument[]} />
       </Section>
 
       <Section

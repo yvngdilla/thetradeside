@@ -5,6 +5,7 @@ import { rerunResearch, updateVendor, type ActionState } from "@/app/actions";
 import { FormMessage, SubmitButton } from "@/components/ui";
 import { METHOD_LABELS } from "@/components/status-tag";
 import type { Vendor } from "@/lib/types";
+import { LookupProgress } from "./lookup-progress";
 
 /**
  * Everything we know about the vendor in one box. Reads as a short list of
@@ -24,7 +25,7 @@ export function VendorInfo({ vendor, defaultDescription }: { vendor: Vendor; def
   if (vendor.status === "researching") {
     return (
       <Sheet title="Trade account">
-        <p className="text-muted">Reading {vendor.domain} for its trade program. This usually takes under a minute.</p>
+        <LookupProgress domain={vendor.domain} startedAt={vendor.updated_at} />
       </Sheet>
     );
   }

@@ -234,6 +234,10 @@ export function demoClient() {
           const f = demoDb().files.get(path);
           return f ? { data: new Blob([Buffer.from(f.bytes)], { type: f.contentType }), error: null } : { data: null, error: { message: "not found" } };
         },
+        remove: async (list: string[]) => {
+          for (const p of list) demoDb().files.delete(p);
+          return { data: [], error: null };
+        },
         createSignedUrl: async (path: string) => {
           const f = demoDb().files.get(path);
           return { data: f ? { signedUrl: `data:${f.contentType};base64,${Buffer.from(f.bytes).toString("base64")}` } : null, error: null };

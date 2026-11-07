@@ -21,6 +21,11 @@ const sans = localFont({
   display: "swap",
 });
 
+// Signature styles for typed electronic signatures (SIL Open Font License).
+const sig1 = localFont({ src: "./fonts/mrs-saint-delafield-latin-400-normal.woff2", variable: "--font-sig-1", display: "block" });
+const sig2 = localFont({ src: "./fonts/herr-von-muellerhoff-latin-400-normal.woff2", variable: "--font-sig-2", display: "block" });
+const sig3 = localFont({ src: "./fonts/allura-latin-400-normal.woff2", variable: "--font-sig-3", display: "block" });
+
 export const metadata: Metadata = {
   title: { default: `The ${APP_NAME}`, template: `%s | ${APP_NAME}` },
   description: APP_TAGLINE,
@@ -28,7 +33,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable}`}>
+    <html lang="en" className={`${serif.variable} ${sans.variable} ${sig1.variable} ${sig2.variable} ${sig3.variable}`}>
       <body className="min-h-dvh">{children}</body>
     </html>
   );

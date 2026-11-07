@@ -10,8 +10,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@browserbasehq/stagehand", "@browserbasehq/sdk", "pdf-lib"],
   experimental: {
     serverActions: {
-      // Document uploads (up to 2.5 MB) and drawn signatures go through server actions.
-      bodySizeLimit: "3mb",
+      // Document uploads go through server actions. Vercel caps request bodies at 4.5 MB.
+      bodySizeLimit: "4.5mb",
     },
   },
 };

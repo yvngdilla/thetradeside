@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { addVendor, type ActionState } from "@/app/actions";
 import { SubmitButton } from "@/components/ui";
 
 export function AddVendorForm() {
   const [state, action] = useActionState<ActionState, FormData>(addVendor, undefined);
+  const [typed, setTyped] = useState("");
   return (
     <form action={action} className="mt-6">
       <label htmlFor="domain" className="sr-only">
-        Vendor website
+        Link to the vendor&rsquo;s website
       </label>
       <div className="flex gap-2">
         <input
@@ -19,11 +21,13 @@ export function AddVendorForm() {
           required
           autoComplete="off"
           spellCheck={false}
-          placeholder="vendor website, like arteriorshome.com"
+          placeholder="Paste any page from their website"
           className="field !text-base !py-2.5"
+          onChange={(e) => setTyped(e.target.value)}
         />
         <SubmitButton pending="Adding…">Add vendor</SubmitButton>
       </div>
+      <PendingRow typed={typed} />
       {state?.error ? (
         <p className="text-sm mt-2 text-alert">
           {state.error}{" "}
@@ -44,5 +48,18 @@ export function AddVendorForm() {
         </p>
       ) : null}
     </form>
+  );
+}
+
+/** Shows the vendor right away, with the lookup sweep, while the server adds it. */
+function PendingRow({ typed }: { typed: string }) {
+  const { pending } = useFormStatus();
+  if (!pending) return null;
+  const host = typed.trim().replace(/^[a-z]+:\/\//i, "").replace(/^www\./i, "").split(/[/?#]/)[0].toLowerCase();
+  return (
+    <div className="row-researching row-arrive mt-4 flex items-center gap-4 py-3 border-b border-rule" aria-live="polite">
+      <p className="t-name truncate text-muted">{host || "New vendor"}</p>
+      <span className="tag tag-research ml-auto">Adding</span>
+    </div>
   );
 }

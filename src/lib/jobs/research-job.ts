@@ -29,13 +29,13 @@ async function demoResearch(domain: string): Promise<ResearchResult> {
 /** Runs vendor research and stores the result. Safe to call from after(). */
 export async function runResearchJob(vendorId: string) {
   const admin = createAdminClient();
-  const { data: vendor } = await admin.from("vendors").select("id, team_id, domain").eq("id", vendorId).single();
+  const { data: vendor } = await admin.from("vendors").select("id, team_id, domain, trade_url").eq("id", vendorId).single();
   if (!vendor) return;
 
   await admin.from("vendors").update({ status: "researching", research_error: null }).eq("id", vendorId);
 
   try {
-    const r = isDemo() ? await demoResearch(vendor.domain) : await researchVendor(vendor.domain);
+    const r = isDemo() ? await demoResearch(vendor.domain) : await researchVendor(vendor.domain, vendor.trade_url);
 
     const { data: profile } = await admin
       .from("business_profiles")
@@ -61,7 +61,7 @@ export async function runResearchJob(vendorId: string) {
         seller_name: r.seller_name,
         method: r.method,
         trade_email: r.trade_email,
-        trade_url: r.trade_url,
+        trade_url: r.trade_url ?? vendor.trade_url,
         application_url: r.application_url,
         own_form_url: r.own_form_url,
         required_documents: r.required_documents,

@@ -37,13 +37,51 @@ async function mapSite(domain: string, search?: string): Promise<{ url: string; 
 }
 
 async function scrape(url: string): Promise<{ url: string; markdown: string }> {
-  const res = await firecrawl<{ data?: { markdown?: string } }>("scrape", {
-    url,
-    formats: ["markdown"],
-    onlyMainContent: false,
-    timeout: 45000,
-  });
-  return { url, markdown: res.data?.markdown ?? "" };
+  const read = async (onlyMainContent: boolean) => {
+    const res = await firecrawl<{ data?: { markdown?: string } }>("scrape", {
+      url,
+      formats: ["markdown"],
+      onlyMainContent,
+      excludeTags: ["style", "script", "noscript", "svg", "template", "iframe"],
+      waitFor: 1500,
+      timeout: 45000,
+    });
+    return cleanMarkdown(res.data?.markdown ?? "");
+  };
+  let markdown = await read(true);
+  // Some themes mark the whole page as navigation. If the main-content pass is
+  // nearly empty, read the full page instead.
+  if (markdown.length < 400) markdown = (await read(false).catch(() => "")) || markdown;
+  return { url, markdown };
+}
+
+/**
+ * Store plugins (gift wrap, reviews, chat) often inject styling that comes
+ * through as text and can fill the start of a page. Strip CSS blocks, custom
+ * properties, selector lists and comments so what's left is the readable page.
+ */
+export function cleanMarkdown(md: string): string {
+  const out: string[] = [];
+  let depth = 0;
+  for (const line of md.split("\n")) {
+    const s = line.trim();
+    const opens = (s.match(/{/g) ?? []).length;
+    const closes = (s.match(/}/g) ?? []).length;
+    if (depth > 0 || (opens && !/^\[|\]\(/.test(s))) {
+      depth = Math.max(0, depth + opens - closes);
+      continue;
+    }
+    if (
+      /^(--[\w-]+\s*:|\/\\*\\?\*|\\?\*\/|[\w-]+\s*:\s*[^\s]+;$|"[\w -]+"\s*;?$|}$)/.test(s) || // declarations, comments
+      /:host\(|::?(before|after|hover|focus|disabled|has|not)\b/.test(s) || // selectors
+      (/,$/.test(s) && /[.#:[\]\\]/.test(s) && !/\s\w+\s\w+\s\w+/.test(s)) || // selector lists
+      /^@(media|supports|keyframes|font-face)/.test(s)
+    ) {
+      continue;
+    }
+    out.push(line);
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 // Words that tend to appear in the URL or title of a vendor's trade program pages.
@@ -96,7 +134,7 @@ export type ResearchResult = z.infer<typeof ResearchSchema>;
 const MAX_PAGE_CHARS = 14000;
 const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 
-export async function researchVendor(domain: string): Promise<ResearchResult> {
+export async function researchVendor(domain: string, firstPage?: string | null): Promise<ResearchResult> {
   const [targeted, all] = await Promise.all([
     mapSite(domain, "trade designer program resale").catch(() => []),
     mapSite(domain).catch(() => []),
@@ -114,7 +152,14 @@ export async function researchVendor(domain: string): Promise<ResearchResult> {
     .filter((l) => l.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  const toScrape = [`https://${domain}`, ...candidates.filter((c) => !/\.pdf$/i.test(c.url)).slice(0, 5).map((c) => c.url)];
+  const toScrape = [
+    ...(firstPage ? [firstPage] : []),
+    `https://${domain}`,
+    ...candidates
+      .filter((c) => !/\.pdf$/i.test(c.url) && c.url !== firstPage)
+      .slice(0, firstPage ? 4 : 5)
+      .map((c) => c.url),
+  ];
   const pages = (await Promise.allSettled(toScrape.map(scrape)))
     .filter((r): r is PromiseFulfilledResult<{ url: string; markdown: string }> => r.status === "fulfilled")
     .map((r) => r.value)
