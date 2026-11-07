@@ -9,9 +9,14 @@ function required(name: string): string {
 
 export const env = {
   supabaseUrl: () => required("NEXT_PUBLIC_SUPABASE_URL"),
-  supabasePublishableKey: () => required("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
-  supabaseSecretKey: () => required("SUPABASE_SECRET_KEY"),
-  appUrl: () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, ""),
+  // Accepts both Supabase's newer key names and the ones the Vercel integration sets.
+  supabasePublishableKey: () => supabasePublicKey() ?? required("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+  supabaseSecretKey: () => process.env.SUPABASE_SECRET_KEY ?? required("SUPABASE_SERVICE_ROLE_KEY"),
+  appUrl: () =>
+    (
+      process.env.APP_URL ??
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000")
+    ).replace(/\/$/, ""),
   encryptionKey: () => required("TOKEN_ENCRYPTION_KEY"),
 
   anthropicApiKey: () => required("ANTHROPIC_API_KEY"),
@@ -37,6 +42,11 @@ export const env = {
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean),
 };
+
+/** Referenced literally so Next.js inlines it in the browser and proxy bundles. */
+export function supabasePublicKey(): string | undefined {
+  return process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+}
 
 export function has(name: string): boolean {
   return Boolean(process.env[name]);
