@@ -29,6 +29,7 @@ export async function sendMagicLink(_: LoginState, fd: FormData): Promise<LoginS
 
   const { data, error } = await admin.auth.admin.generateLink({ type: "magiclink", email });
   if (error || !data.properties?.hashed_token) {
+    console.error("[sign-in] generateLink failed:", error?.message ?? "no token returned");
     return { error: "Couldn't create a sign-in link. Wait a minute and try again." };
   }
 
@@ -45,7 +46,8 @@ export async function sendMagicLink(_: LoginState, fd: FormData): Promise<LoginS
       ),
       text: `Sign in to ${APP_NAME}: ${url}\n\nThe link works once and expires in an hour.`,
     });
-  } catch {
+  } catch (err) {
+    console.error("[sign-in] email send failed:", err instanceof Error ? err.message : err);
     return { error: "Couldn't send the sign-in email. Wait a minute and try again." };
   }
   return { sentTo: email };

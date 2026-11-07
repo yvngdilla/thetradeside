@@ -367,7 +367,8 @@ export async function inviteMember(_: ActionState, fd: FormData): Promise<Action
       ),
       text: `${ws.email} added you to ${ws.teamName} on ${APP_NAME}. Sign in with ${email} at ${url}`,
     });
-  } catch {
+  } catch (err) {
+    console.error("[invite] email send failed:", err instanceof Error ? err.message : err);
     return { ok: `${email} was added, but the invite email didn't send. Ask them to sign in at ${url}.` };
   }
   return { ok: `Invite sent to ${email}` };

@@ -49,8 +49,10 @@ export async function sendMail(mail: Mail): Promise<{ id: string }> {
       })),
     }),
   });
-  const json = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
-  if (!res.ok || !json.id) throw new Error(`Email couldn't be sent: ${json.message ?? res.statusText}`);
+  const json = (await res.json().catch(() => ({}))) as { id?: string; message?: string; name?: string };
+  if (!res.ok || !json.id) {
+    throw new Error(`Email couldn't be sent (Resend ${res.status} ${json.name ?? ""}): ${json.message ?? res.statusText} [from ${from}]`);
+  }
   return { id: json.id };
 }
 
