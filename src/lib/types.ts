@@ -115,7 +115,8 @@ export function fullAddress(p: BusinessProfile): string {
   return `${p.address_line1}${line2}, ${p.city}, ${p.state} ${p.postal_code}`.trim();
 }
 
-export function profileGaps(p: BusinessProfile | null, s: Signer | null): string[] {
+/** Certificate details still missing (shared by the workspace). */
+export function detailGaps(p: BusinessProfile | null): string[] {
   const gaps: string[] = [];
   if (!p?.business_name) gaps.push("firm name");
   if (!p?.purchaser_name) gaps.push("name of purchaser");
@@ -124,8 +125,18 @@ export function profileGaps(p: BusinessProfile | null, s: Signer | null): string
   if (!p?.property_description) gaps.push("description of what you buy for resale");
   if (!p?.address_line1 || !p?.city || !p?.postal_code) gaps.push("business address");
   if (!p?.phone) gaps.push("phone number");
+  return gaps;
+}
+
+/** Signing details still missing (each person adds their own). */
+export function signerGaps(s: Signer | null): string[] {
+  const gaps: string[] = [];
   if (!s?.printed_name) gaps.push("your printed name");
   if (!s?.title) gaps.push("your title");
   if (!s?.signature_path) gaps.push("your signature");
   return gaps;
+}
+
+export function profileGaps(p: BusinessProfile | null, s: Signer | null): string[] {
+  return [...detailGaps(p), ...signerGaps(s)];
 }

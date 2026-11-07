@@ -8,21 +8,24 @@ import { SubmitButton } from "@/components/ui";
 export function AddVendorForm() {
   const [state, action] = useActionState<ActionState, FormData>(addVendor, undefined);
   return (
-    <form action={action} className="mt-6">
-      <label htmlFor="domain" className="sr-only">
-        Vendor website
+    <form action={action} className="mt-8 rounded-md border border-rule bg-sheet p-5">
+      <label htmlFor="domain" className="label">
+        Add a vendor
       </label>
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           id="domain"
           name="domain"
           required
           autoComplete="off"
           spellCheck={false}
-          placeholder="vendor website, like arteriorshome.com"
+          inputMode="url"
+          placeholder="Vendor website, like arteriorshome.com"
           className="field !text-base !py-2.5"
         />
-        <SubmitButton pending="Adding…">Add vendor</SubmitButton>
+        <SubmitButton pending="Adding…" className="btn btn-primary justify-center shrink-0">
+          Add vendor
+        </SubmitButton>
       </div>
       {state?.error ? (
         <p className="text-sm mt-2 text-alert">
