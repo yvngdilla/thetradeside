@@ -6,23 +6,44 @@ import { SIGNATURE_STYLES, type SignatureStyle } from "@/app/fonts/signature";
 /** Pen colour for drawn and typed signatures. */
 const INK = "#1c2440";
 
+type Method = "draw" | "type" | "upload";
+const METHODS: [Method, string][] = [
+  ["draw", "Draw"],
+  ["type", "Type"],
+  ["upload", "Upload"],
+];
+
 /**
  * Draw a signature with a mouse, finger or stylus, type it in a handwriting
  * style, or upload an image of one. Writes a transparent PNG data URL into a
- * hidden input named "signature".
+ * hidden input named "signature"; left empty, the saved signature is kept.
  */
 export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
   const root = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const [value, setValue] = useState("");
-  const [mode, setMode] = useState<"view" | "draw" | "type">(existingUrl ? "view" : "draw");
+  // With a saved signature, show it until the signer chooses to change it.
+  const [changing, setChanging] = useState(!existingUrl);
+  const [method, setMethod] = useState<Method>("draw");
   const [typed, setTyped] = useState("");
   const [styleId, setStyleId] = useState(SIGNATURE_STYLES[0].id);
+  const [uploaded, setUploaded] = useState("");
+
+  const printedName = () => {
+    const el = root.current?.closest("form")?.elements.namedItem("printed_name");
+    return el instanceof HTMLInputElement ? el.value.trim() : "";
+  };
+
+  const choose = (next: Method) => {
+    setMethod(next);
+    setValue(next === "upload" ? uploaded : "");
+    if (next === "type" && !typed) setTyped(printedName());
+  };
 
   // Typed signatures are rendered to the same transparent PNG a drawn one makes.
   useEffect(() => {
-    if (mode !== "type") return;
+    if (!changing || method !== "type") return;
     const style = SIGNATURE_STYLES.find((s) => s.id === styleId) ?? SIGNATURE_STYLES[0];
     let cancelled = false;
     renderTyped(typed.trim(), style).then((png) => {
@@ -31,25 +52,11 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
     return () => {
       cancelled = true;
     };
-  }, [mode, typed, styleId]);
-
-  const startTyping = () => {
-    if (!typed) {
-      const printed = root.current?.closest("form")?.elements.namedItem("printed_name");
-      if (printed instanceof HTMLInputElement) setTyped(printed.value.trim());
-    }
-    setValue("");
-    setMode("type");
-  };
-
-  const startDrawing = () => {
-    setValue("");
-    setMode("draw");
-  };
+  }, [changing, method, typed, styleId]);
 
   useEffect(() => {
     const c = canvas.current;
-    if (!c || mode !== "draw") return;
+    if (!c || !changing || method !== "draw") return;
     const ratio = window.devicePixelRatio || 1;
     c.width = c.offsetWidth * ratio;
     c.height = c.offsetHeight * ratio;
@@ -59,13 +66,12 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = INK;
-  }, [mode]);
+  }, [changing, method]);
 
   const point = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   };
-
   const start = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     drawing.current = true;
@@ -86,7 +92,6 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
     drawing.current = false;
     setValue(trimmedPng(canvas.current!));
   };
-
   const clear = () => {
     const c = canvas.current!;
     c.getContext("2d")!.clearRect(0, 0, c.width, c.height);
@@ -106,105 +111,123 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
     const ctx = c.getContext("2d")!;
     ctx.drawImage(img, 0, 0, c.width, c.height);
     knockOutWhite(ctx, c.width, c.height);
-    setValue(c.toDataURL("image/png"));
-    setMode("view");
+    const png = c.toDataURL("image/png");
+    setUploaded(png);
+    setValue(png);
   };
 
-  const keepCurrent = existingUrl ? (
-    <button type="button" className="btn btn-quiet" onClick={() => { setValue(""); setMode("view"); }}>
-      Keep current signature
-    </button>
-  ) : null;
-  const uploadButton = (
-    <label className="btn btn-quiet has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest">
-      Upload an image
-      <input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={onUpload} />
-    </label>
-  );
+  const keepCurrent = () => {
+    setValue("");
+    setChanging(false);
+  };
 
   return (
     <div ref={root}>
       <input type="hidden" name="signature" value={value} />
-      {mode === "view" ? (
-        <div className="flex items-end gap-4">
+      {!changing ? (
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
           <div className="h-20 w-72 border-b border-ink/60 flex items-end">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {value || existingUrl ? <img src={value || existingUrl!} alt="Your signature" className="max-h-16" /> : null}
+            {existingUrl ? <img src={existingUrl} alt="Your saved signature" className="max-h-16" /> : null}
           </div>
-          <button type="button" className="btn btn-quiet" onClick={startDrawing}>
-            Redraw
+          <button type="button" className="btn btn-quiet" onClick={() => setChanging(true)}>
+            Change signature
           </button>
-          <button type="button" className="btn btn-quiet" onClick={startTyping}>
-            Type instead
-          </button>
-        </div>
-      ) : mode === "type" ? (
-        <div className="max-w-md">
-          <label htmlFor="typed_signature" className="label">
-            Type your name
-          </label>
-          <input
-            id="typed_signature"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            className="field"
-            autoComplete="name"
-            maxLength={60}
-          />
-          <fieldset className="mt-3 grid gap-2">
-            <legend className="sr-only">Signature style</legend>
-            {SIGNATURE_STYLES.map((style) => (
-              <label
-                key={style.id}
-                className={`flex items-center gap-3 rounded-md border px-3 h-16 cursor-pointer bg-sheet has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest ${
-                  style.id === styleId ? "border-forest" : "border-rule hover:border-control"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="signature_style"
-                  value={style.id}
-                  checked={style.id === styleId}
-                  onChange={() => setStyleId(style.id)}
-                  className="sr-only"
-                />
-                <span className={`${style.className} truncate text-ink leading-none`} style={{ fontSize: style.size * 0.45 }}>
-                  {typed.trim() || "Your name"}
-                </span>
-                <span className="ml-auto text-xs text-muted shrink-0">{style.label}</span>
-              </label>
-            ))}
-          </fieldset>
-          <p className="hint">This goes on your certificates the same as a signature you draw.</p>
-          <div className="flex flex-wrap gap-2 mt-3 items-center">
-            <button type="button" className="btn btn-quiet" onClick={startDrawing}>
-              Draw instead
-            </button>
-            {uploadButton}
-            {keepCurrent}
-          </div>
         </div>
       ) : (
-        <div>
-          <canvas
-            ref={canvas}
-            className="h-28 w-full max-w-md bg-sheet border border-rule rounded-md touch-none cursor-crosshair"
-            onPointerDown={start}
-            onPointerMove={move}
-            onPointerUp={end}
-            onPointerLeave={end}
-            aria-label="Signature drawing area"
-          />
-          <div className="flex flex-wrap gap-2 mt-2 items-center">
-            <button type="button" className="btn btn-quiet" onClick={clear}>
-              Clear
-            </button>
-            <button type="button" className="btn btn-quiet" onClick={startTyping}>
-              Type it instead
-            </button>
-            {uploadButton}
-            {keepCurrent}
+        <div className="max-w-md">
+          <div role="radiogroup" aria-label="How to add your signature" className="segmented mb-3">
+            {METHODS.map(([key, label]) => (
+              <button key={key} type="button" role="radio" aria-checked={method === key} onClick={() => choose(key)}>
+                {label}
+              </button>
+            ))}
           </div>
+
+          {method === "draw" ? (
+            <div>
+              <div className="relative">
+                <canvas
+                  ref={canvas}
+                  className="block h-32 w-full bg-sheet border border-control rounded-md touch-none cursor-crosshair"
+                  onPointerDown={start}
+                  onPointerMove={move}
+                  onPointerUp={end}
+                  onPointerLeave={end}
+                  aria-label="Signature drawing area"
+                />
+                {/* A signing line, like on paper. */}
+                <div aria-hidden className="pointer-events-none absolute inset-x-6 bottom-7 border-b border-rule" />
+                {!value ? (
+                  <p aria-hidden className="pointer-events-none absolute left-6 bottom-8 text-sm text-muted">
+                    Sign here with your mouse or finger
+                  </p>
+                ) : null}
+              </div>
+              <div className="mt-2 flex justify-end">
+                <button type="button" className="text-sm text-muted underline underline-offset-2 hover:text-ink disabled:opacity-40" onClick={clear} disabled={!value}>
+                  Clear
+                </button>
+              </div>
+            </div>
+          ) : method === "type" ? (
+            <div>
+              <label htmlFor="typed_signature" className="label">
+                Your name
+              </label>
+              <input
+                id="typed_signature"
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+                className="field"
+                autoComplete="name"
+                maxLength={60}
+              />
+              <fieldset className="mt-3 grid gap-2">
+                <legend className="label">Style</legend>
+                {SIGNATURE_STYLES.map((style) => (
+                  <label
+                    key={style.id}
+                    className={`flex items-center gap-3 rounded-md border px-3 h-16 cursor-pointer bg-sheet has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest ${
+                      style.id === styleId ? "border-forest ring-1 ring-forest" : "border-rule hover:border-control"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="signature_style"
+                      value={style.id}
+                      checked={style.id === styleId}
+                      onChange={() => setStyleId(style.id)}
+                      className="sr-only"
+                    />
+                    <span className={`${style.className} truncate text-ink leading-none`} style={{ fontSize: style.size * 0.45 }}>
+                      {typed.trim() || "Your name"}
+                    </span>
+                    <span className="ml-auto text-xs text-muted shrink-0">{style.label}</span>
+                  </label>
+                ))}
+              </fieldset>
+              <p className="hint">This goes on your certificates the same as a signature you draw.</p>
+            </div>
+          ) : (
+            <label className="flex flex-col items-center gap-1 rounded-md border border-dashed border-control bg-paper px-6 py-6 text-center cursor-pointer hover:border-forest has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest">
+              <input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={onUpload} />
+              {uploaded ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={uploaded} alt="Your uploaded signature" className="max-h-16 mb-1" />
+              ) : null}
+              <span className="font-semibold">
+                {uploaded ? "Choose a different image" : <>Choose an image of your signature</>}
+              </span>
+              <span className="text-sm text-muted">PNG or JPG. Sign on plain white paper; the background is removed.</span>
+            </label>
+          )}
+
+          {existingUrl ? (
+            <button type="button" className="mt-3 text-sm text-muted underline underline-offset-2 hover:text-ink" onClick={keepCurrent}>
+              Keep my current signature
+            </button>
+          ) : null}
         </div>
       )}
     </div>
