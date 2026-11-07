@@ -85,7 +85,7 @@ npm run dev
 
 ## How filing stays safe
 
-- Certificates are signed only with the signature the signer drew or uploaded themselves.
+- Certificates are signed only with the signature the signer drew, typed or uploaded themselves.
 - Certificates are emailed only when a designer presses Send to vendor (or Send in their own Outlook for drafts). Replies go to the designer.
 - The online-form assistant never submits, never types passwords and never solves verification checks. It hands over to a person in a live view.
 - Outlook tokens are encrypted at rest; storage is private and read only by the server after a workspace check.

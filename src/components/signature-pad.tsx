@@ -1,16 +1,51 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { SIGNATURE_STYLES, type SignatureStyle } from "@/app/fonts/signature";
+
+/** Pen colour for drawn and typed signatures. */
+const INK = "#1c2440";
 
 /**
- * Draw a signature with a mouse, finger or stylus, or upload an image of one.
- * Writes a transparent PNG data URL into a hidden input named "signature".
+ * Draw a signature with a mouse, finger or stylus, type it in a handwriting
+ * style, or upload an image of one. Writes a transparent PNG data URL into a
+ * hidden input named "signature".
  */
 export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
+  const root = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const [value, setValue] = useState("");
-  const [mode, setMode] = useState<"view" | "draw">(existingUrl ? "view" : "draw");
+  const [mode, setMode] = useState<"view" | "draw" | "type">(existingUrl ? "view" : "draw");
+  const [typed, setTyped] = useState("");
+  const [styleId, setStyleId] = useState(SIGNATURE_STYLES[0].id);
+
+  // Typed signatures are rendered to the same transparent PNG a drawn one makes.
+  useEffect(() => {
+    if (mode !== "type") return;
+    const style = SIGNATURE_STYLES.find((s) => s.id === styleId) ?? SIGNATURE_STYLES[0];
+    let cancelled = false;
+    renderTyped(typed.trim(), style).then((png) => {
+      if (!cancelled) setValue(png);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, typed, styleId]);
+
+  const startTyping = () => {
+    if (!typed) {
+      const printed = root.current?.closest("form")?.elements.namedItem("printed_name");
+      if (printed instanceof HTMLInputElement) setTyped(printed.value.trim());
+    }
+    setValue("");
+    setMode("type");
+  };
+
+  const startDrawing = () => {
+    setValue("");
+    setMode("draw");
+  };
 
   useEffect(() => {
     const c = canvas.current;
@@ -23,7 +58,7 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
     ctx.lineWidth = 2.2;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.strokeStyle = "#1c2440";
+    ctx.strokeStyle = INK;
   }, [mode]);
 
   const point = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -75,8 +110,20 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
     setMode("view");
   };
 
+  const keepCurrent = existingUrl ? (
+    <button type="button" className="btn btn-quiet" onClick={() => { setValue(""); setMode("view"); }}>
+      Keep current signature
+    </button>
+  ) : null;
+  const uploadButton = (
+    <label className="btn btn-quiet has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest">
+      Upload an image
+      <input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={onUpload} />
+    </label>
+  );
+
   return (
-    <div>
+    <div ref={root}>
       <input type="hidden" name="signature" value={value} />
       {mode === "view" ? (
         <div className="flex items-end gap-4">
@@ -84,9 +131,58 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {value || existingUrl ? <img src={value || existingUrl!} alt="Your signature" className="max-h-16" /> : null}
           </div>
-          <button type="button" className="btn btn-quiet" onClick={() => setMode("draw")}>
+          <button type="button" className="btn btn-quiet" onClick={startDrawing}>
             Redraw
           </button>
+          <button type="button" className="btn btn-quiet" onClick={startTyping}>
+            Type instead
+          </button>
+        </div>
+      ) : mode === "type" ? (
+        <div className="max-w-md">
+          <label htmlFor="typed_signature" className="label">
+            Type your name
+          </label>
+          <input
+            id="typed_signature"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            className="field"
+            autoComplete="name"
+            maxLength={60}
+          />
+          <fieldset className="mt-3 grid gap-2">
+            <legend className="sr-only">Signature style</legend>
+            {SIGNATURE_STYLES.map((style) => (
+              <label
+                key={style.id}
+                className={`flex items-center gap-3 rounded-md border px-3 h-16 cursor-pointer bg-sheet has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest ${
+                  style.id === styleId ? "border-forest" : "border-rule hover:border-control"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="signature_style"
+                  value={style.id}
+                  checked={style.id === styleId}
+                  onChange={() => setStyleId(style.id)}
+                  className="sr-only"
+                />
+                <span className={`${style.className} truncate text-ink leading-none`} style={{ fontSize: style.size * 0.45 }}>
+                  {typed.trim() || "Your name"}
+                </span>
+                <span className="ml-auto text-xs text-muted shrink-0">{style.label}</span>
+              </label>
+            ))}
+          </fieldset>
+          <p className="hint">This goes on your certificates the same as a signature you draw.</p>
+          <div className="flex flex-wrap gap-2 mt-3 items-center">
+            <button type="button" className="btn btn-quiet" onClick={startDrawing}>
+              Draw instead
+            </button>
+            {uploadButton}
+            {keepCurrent}
+          </div>
         </div>
       ) : (
         <div>
@@ -103,20 +199,42 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
             <button type="button" className="btn btn-quiet" onClick={clear}>
               Clear
             </button>
-            <label className="btn btn-quiet">
-              Upload an image
-              <input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={onUpload} />
-            </label>
-            {existingUrl ? (
-              <button type="button" className="btn btn-quiet" onClick={() => { setValue(""); setMode("view"); }}>
-                Keep current signature
-              </button>
-            ) : null}
+            <button type="button" className="btn btn-quiet" onClick={startTyping}>
+              Type it instead
+            </button>
+            {uploadButton}
+            {keepCurrent}
           </div>
         </div>
       )}
     </div>
   );
+}
+
+/** Renders a typed name in a handwriting face as a trimmed, transparent PNG. */
+async function renderTyped(name: string, style: SignatureStyle): Promise<string> {
+  if (!name) return "";
+  const scale = 2;
+  const font = `${style.size * scale}px ${style.fontFamily}`;
+  try {
+    // Load only the handwriting face: asking for the whole stack can reject when a
+    // local fallback face isn't installed.
+    await document.fonts.load(`${style.size * scale}px ${style.fontFamily.split(",")[0]}`, name);
+  } catch {
+    // Draw with whatever is available rather than leave the signature empty.
+  }
+  const c = document.createElement("canvas");
+  const ctx = c.getContext("2d")!;
+  ctx.font = font;
+  const width = Math.ceil(ctx.measureText(name).width);
+  // Generous room: script faces swash well past their measured box.
+  c.width = width + style.size * scale * 2;
+  c.height = Math.ceil(style.size * scale * 2.2);
+  ctx.font = font;
+  ctx.fillStyle = INK;
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(name, style.size * scale, style.size * scale * 1.4);
+  return trimmedPng(c);
 }
 
 function trimmedPng(c: HTMLCanvasElement): string {

@@ -35,7 +35,8 @@ its accounts). If a task seems to need something from there, stop and ask.
   not a heads-up: sending email, invites, vendor submissions, production
   deploys, env var changes in Vercel.
 - The product's own filing rules are not negotiable:
-  - Certificates are signed only with a signature the signer drew or uploaded.
+  - Certificates are signed only with a signature the signer drew, typed or
+    uploaded themselves.
   - Email to a vendor goes out only when a designer presses Send.
   - Outlook integration only ever creates drafts. It never sends.
   - The online-form assistant never submits, never types passwords and never
