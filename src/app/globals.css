@@ -125,6 +125,10 @@ body {
   outline: none;
   box-shadow: var(--shadow-field-focus);
 }
+/* Filled in from an uploaded certificate, until the designer edits or saves it. */
+.field.is-imported {
+  background: var(--forest-wash);
+}
 .field[aria-invalid="true"] {
   border-color: var(--alert);
 }
