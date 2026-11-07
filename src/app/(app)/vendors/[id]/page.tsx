@@ -7,10 +7,11 @@ import { getOutlookConnection } from "@/lib/outlook";
 import { has } from "@/lib/env";
 import { profileGaps, type Filing, type TeamDocument, type Vendor } from "@/lib/types";
 import { certificateEmail } from "@/lib/filing";
-import { StatusTag, METHOD_LABELS } from "@/components/status-tag";
+import { StatusTag } from "@/components/status-tag";
 import { AutoRefresh } from "@/components/ui";
-import { cancelFiling, confirmPortalSubmitted, deleteVendor, rerunResearch } from "@/app/actions";
-import { VendorDetailsForm } from "./details-form";
+import { cancelFiling, confirmPortalSubmitted } from "@/app/actions";
+import { VendorInfo, Sheet } from "./vendor-info";
+import { RemoveVendor } from "./remove-vendor";
 import { FilePanel } from "./file-panel";
 import { CheckSentButton } from "./check-sent";
 
@@ -45,162 +46,140 @@ export default async function VendorPage(props: PageProps<"/vendors/[id]">) {
   const emailPreview = profile && signer && !gaps.length ? certificateEmail(vendor, profile, signer, []) : null;
   const busy = vendor.status === "researching" || active?.status === "preparing" || active?.status === "portal_running";
 
+  const name = vendor.display_name || vendor.domain;
+  // When the lookup needs checking, show the details before the filing box.
+  const checkFirst = !active && (vendor.status === "needs_review" || vendor.status === "failed");
+  const lastFiled = filings.find((f) => ["sent", "submitted", "manual"].includes(f.status)) ?? null;
+
   return (
-    <div>
+    <div className="max-w-[720px]">
       <AutoRefresh active={busy} />
       <Link href="/" className="text-sm text-muted hover:text-ink">
         All vendors
       </Link>
 
-      <header className="mt-4 flex flex-wrap items-start gap-x-6 gap-y-3">
-        <div className="min-w-0">
-          <h1 className="t-title break-words">{vendor.display_name || vendor.domain}</h1>
-          <p className="mt-1 text-muted">
-            <a href={`https://${vendor.domain}`} target="_blank" rel="noreferrer" className="hover:text-ink underline-offset-4 hover:underline">
-              {vendor.domain}
-            </a>
-            {vendor.aliases.length ? <span> and {vendor.aliases.join(", ")}</span> : null}
-          </p>
-        </div>
-        <div className="sm:ml-auto pt-2">
+      <header className="mt-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 className="t-title break-words min-w-0">{name}</h1>
           <StatusTag status={vendor.status} />
         </div>
+        <p className="mt-1 text-muted">
+          <a href={`https://${vendor.domain}`} target="_blank" rel="noreferrer" className="hover:text-ink underline-offset-4 hover:underline">
+            {vendor.domain}
+          </a>
+          {vendor.aliases.length ? <span> and {vendor.aliases.join(", ")}</span> : null}
+        </p>
+        <p className="mt-4 text-[17px] leading-7">{nextStep(vendor, name, active)}</p>
       </header>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="min-w-0 space-y-10">
-          <section>
-            <h2 className="t-name">What we found</h2>
-            {vendor.status === "researching" ? (
-              <p className="mt-3 text-muted">Reading {vendor.domain} for its trade program. This usually takes under a minute.</p>
-            ) : vendor.status === "failed" ? (
-              <div className="mt-3">
-                <p className="text-alert">{vendor.research_error}</p>
-                <p className="text-muted mt-1 text-sm">Add the details below by hand, or try the lookup again.</p>
-              </div>
-            ) : (
-              <div className="mt-3 space-y-3">
-                <p className="max-w-prose">{vendor.research_summary}</p>
-                <dl className="grid grid-cols-[9rem_1fr] gap-x-4 gap-y-2 text-sm max-w-prose">
-                  <dt className="text-muted">How to submit</dt>
-                  <dd>{METHOD_LABELS[vendor.method]}</dd>
-                  {vendor.required_documents.length ? (
-                    <>
-                      <dt className="text-muted">They ask for</dt>
-                      <dd>{vendor.required_documents.join(", ")}</dd>
-                    </>
-                  ) : null}
-                  {vendor.discount_info ? (
-                    <>
-                      <dt className="text-muted">Trade pricing</dt>
-                      <dd>{vendor.discount_info}</dd>
-                    </>
-                  ) : null}
-                  {vendor.own_form_url ? (
-                    <>
-                      <dt className="text-muted">Their own form</dt>
-                      <dd>
-                        <a href={vendor.own_form_url} target="_blank" rel="noreferrer" className="underline underline-offset-4">
-                          Open the vendor&rsquo;s form
-                        </a>
-                      </dd>
-                    </>
-                  ) : null}
-                  {vendor.research_confidence ? (
-                    <>
-                      <dt className="text-muted">Confidence</dt>
-                      <dd className="capitalize">{vendor.research_confidence}</dd>
-                    </>
-                  ) : null}
-                </dl>
-                {vendor.notes ? <p className="text-sm border-l-2 border-alert pl-3 max-w-prose">{vendor.notes}</p> : null}
-                {vendor.research_sources.length ? (
-                  <details className="text-sm text-muted">
-                    <summary className="cursor-pointer hover:text-ink">Pages we read</summary>
-                    <ul className="mt-2 space-y-1">
-                      {vendor.research_sources.map((s) => (
-                        <li key={s} className="truncate">
-                          <a href={s} target="_blank" rel="noreferrer" className="underline underline-offset-4">
-                            {s}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                ) : null}
-              </div>
-            )}
-            {vendor.status !== "researching" ? (
-              <form action={rerunResearch.bind(null, vendor.id)} className="mt-4">
-                <button className="text-sm text-muted hover:text-ink underline underline-offset-4">Look up again</button>
-              </form>
-            ) : null}
-          </section>
+      <div className="mt-8 space-y-6">
+        {checkFirst ? (
+          <>
+        <VendorInfo vendor={vendor} defaultDescription={profile?.property_description ?? ""} />
+        {active ? (
+          <ActiveFiling filing={active} />
+        ) : (
+          <FilePanel
+            vendor={vendor}
+            docs={docs.map((d) => ({ id: d.id, label: d.label }))}
+            gaps={gaps}
+            outlookEmail={outlook?.email ?? null}
+            userEmail={ws.email}
+            emailPreview={emailPreview ? { subject: emailPreview.subject, text: emailPreview.text } : null}
+            portalEnabled={has("BROWSERBASE_API_KEY")}
+            lastFiled={lastFiled}
+          />
+        )}
 
-          <section>
-            <h2 className="t-name">Details</h2>
-            <p className="text-sm text-muted mt-1">Correct anything the lookup got wrong. The certificate uses these.</p>
-            <VendorDetailsForm vendor={vendor} defaultDescription={profile?.property_description ?? ""} />
-          </section>
+          </>
+        ) : (
+          <>
+        {active ? (
+          <ActiveFiling filing={active} />
+        ) : (
+          <FilePanel
+            vendor={vendor}
+            docs={docs.map((d) => ({ id: d.id, label: d.label }))}
+            gaps={gaps}
+            outlookEmail={outlook?.email ?? null}
+            userEmail={ws.email}
+            emailPreview={emailPreview ? { subject: emailPreview.subject, text: emailPreview.text } : null}
+            portalEnabled={has("BROWSERBASE_API_KEY")}
+            lastFiled={lastFiled}
+          />
+        )}
 
-          {filings.length ? (
-            <section>
-              <h2 className="t-name">History</h2>
-              <ol className="mt-4 space-y-6">
-                {filings.map((f) => (
-                  <li key={f.id} className="border-l border-rule pl-4">
-                    <p className="text-sm">
-                      <span className="font-semibold">{HISTORY_LABEL[f.status]}</span>{" "}
-                      <span className="text-muted">
-                        {new Date(f.created_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
-                        {f.sent_to ? `, to ${f.sent_to}` : ""}
-                      </span>
+        <VendorInfo vendor={vendor} defaultDescription={profile?.property_description ?? ""} />
+          </>
+        )}
+
+        {filings.length ? (
+          <Sheet title="History">
+            <ol className="space-y-5">
+              {filings.map((f) => (
+                <li key={f.id} className="grid grid-cols-[8.5rem_1fr] gap-x-4 text-[15px]">
+                  <p className="text-muted">{new Date(f.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}</p>
+                  <div className="min-w-0">
+                    <p>
+                      <span className="font-semibold">{HISTORY_LABEL[f.status]}</span>
+                      {f.sent_to ? <span className="text-muted">, to {f.sent_to}</span> : null}
                     </p>
-                    {f.certificate_path ? (
-                      <a href={`/api/filings/${f.id}/certificate`} target="_blank" className="text-sm underline underline-offset-4">
-                        View certificate
-                      </a>
-                    ) : null}
                     {f.error ? <p className="text-sm text-alert mt-1">{f.error}</p> : null}
-                    {f.steps.length ? (
-                      <ul className="mt-2 text-sm text-muted space-y-0.5">
-                        {f.steps.map((s, i) => (
-                          <li key={i} className={s.ok ? "" : "text-alert"}>
-                            {s.text}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </li>
-                ))}
-              </ol>
-            </section>
-          ) : null}
+                    <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+                      {f.certificate_path ? (
+                        <a href={`/api/filings/${f.id}/certificate`} target="_blank" className="link">
+                          View certificate
+                        </a>
+                      ) : null}
+                      {f.steps.length ? (
+                        <details className="text-muted">
+                          <summary className="cursor-pointer hover:text-ink">Steps ({f.steps.length})</summary>
+                          <ul className="mt-2 space-y-0.5">
+                            {f.steps.map((st, i) => (
+                              <li key={i} className={st.ok ? "" : "text-alert"}>
+                                {st.text}
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                      ) : null}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </Sheet>
+        ) : null}
 
-          <form action={deleteVendor.bind(null, vendor.id)}>
-            <button className="btn btn-danger text-sm">Remove vendor</button>
-          </form>
+        <div className="pt-2">
+          <RemoveVendor vendorId={vendor.id} name={name} />
         </div>
-
-        <aside className="lg:sticky lg:top-20 self-start">
-          {active ? (
-            <ActiveFiling filing={active} />
-          ) : (
-            <FilePanel
-              vendor={vendor}
-              docs={docs.map((d) => ({ id: d.id, label: d.label }))}
-              gaps={gaps}
-              outlookEmail={outlook?.email ?? null}
-              userEmail={ws.email}
-              emailPreview={emailPreview ? { subject: emailPreview.subject, text: emailPreview.text } : null}
-              portalEnabled={has("BROWSERBASE_API_KEY")}
-              lastFiled={filings.find((f) => ["sent", "submitted", "manual"].includes(f.status)) ?? null}
-            />
-          )}
-        </aside>
       </div>
     </div>
   );
+}
+
+/** One plain sentence saying where things stand and what to do next. */
+function nextStep(vendor: Vendor, name: string, active: Filing | undefined): string {
+  if (active?.status === "draft_created") return `Your email to ${name} is waiting in Outlook.`;
+  if (active?.status === "awaiting_review") return `The ${name} application is filled in and waiting for you to review and submit.`;
+  if (active) return `Filing with ${name} now.`;
+  switch (vendor.status) {
+    case "researching":
+      return `We're reading ${vendor.domain} to find out how ${name} takes certificates.`;
+    case "failed":
+      return "We couldn't read their website. Add their trade email or application page below, then file.";
+    case "needs_review":
+      return "We found some of what we need. Check the details below before filing.";
+    case "filed":
+      return `${name} has your certificate on file${vendor.filed_at ? ` since ${new Date(vendor.filed_at).toLocaleDateString("en-US", { dateStyle: "long" })}` : ""}.`;
+    default:
+      if (vendor.method === "email") return `${name} takes the certificate by email. Ready to send.`;
+      if (vendor.method === "web_form" || vendor.method === "portal_account")
+        return `${name} uses an online application. We can fill it in for you to review and submit.`;
+      if (vendor.method === "contact_rep") return `${name} sets up trade accounts through a rep. Send the certificate to them, then mark it filed.`;
+      return `Ready to file with ${name}.`;
+  }
 }
 
 const HISTORY_LABEL: Record<Filing["status"], string> = {
@@ -218,15 +197,15 @@ const HISTORY_LABEL: Record<Filing["status"], string> = {
 function ActiveFiling({ filing }: { filing: Filing }) {
   if (filing.status === "preparing") {
     return (
-      <Panel title="Getting started">
+      <Sheet title="Getting started">
         <p className="text-muted">Preparing your signed certificate and opening the vendor&rsquo;s site.</p>
-      </Panel>
+      </Sheet>
     );
   }
 
   if (filing.status === "draft_created") {
     return (
-      <Panel title="Draft is in Outlook">
+      <Sheet title="Draft is in Outlook">
         <p>
           The email to <span className="font-semibold">{filing.sent_to}</span> is in your Drafts with the certificate attached. Review it
           and press Send in Outlook.
@@ -248,14 +227,14 @@ function ActiveFiling({ filing }: { filing: Filing }) {
             <button className="btn btn-quiet">Cancel</button>
           </form>
         </div>
-      </Panel>
+      </Sheet>
     );
   }
 
   // Portal: running or waiting for review.
   const running = filing.status === "portal_running";
   return (
-    <Panel title={running ? "Filling in the application" : "Review and submit"}>
+    <Sheet title={running ? "Filling in the application" : "Review and submit"}>
       {running ? (
         <p className="text-muted">Watch it work below. It will stop before submitting anything.</p>
       ) : (
@@ -297,15 +276,6 @@ function ActiveFiling({ filing }: { filing: Filing }) {
           </form>
         </div>
       ) : null}
-    </Panel>
-  );
-}
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="sheet p-6">
-      <h2 className="t-name mb-3">{title}</h2>
-      {children}
-    </section>
+    </Sheet>
   );
 }

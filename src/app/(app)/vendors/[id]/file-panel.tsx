@@ -45,11 +45,7 @@ export function FilePanel({
   if (vendor.status === "filed" && !refile) {
     return (
       <section className="sheet p-6">
-        <h2 className="t-name">Filed</h2>
-        <p className="mt-2">
-          Certificate on file since{" "}
-          {vendor.filed_at ? new Date(vendor.filed_at).toLocaleDateString("en-US", { dateStyle: "long" }) : "earlier"}.
-        </p>
+        <h2 className="t-name">Certificate on file</h2>
         <div className="flex flex-wrap gap-2 mt-4">
           {lastFiled?.certificate_path ? (
             <a href={`/api/filings/${lastFiled.id}/certificate`} target="_blank" className="btn btn-quiet">
@@ -156,10 +152,10 @@ function EmailForm({
       </label>
       <input id="to" name="to" type="email" required defaultValue={vendor.trade_email ?? ""} className="field" />
       <DocumentChoices docs={docs} required={vendor.required_documents} />
-      <label htmlFor="note" className="label mt-4">
-        Add a note <span className="font-normal text-muted">(optional)</span>
-      </label>
-      <textarea id="note" name="note" rows={2} className="field" placeholder="Like a project name or your account number" />
+      <details className="mt-4">
+        <summary className="text-sm text-muted cursor-pointer hover:text-ink">Add a note</summary>
+        <textarea id="note" name="note" rows={2} className="field mt-2" placeholder="Like a project name or your account number" aria-label="Note to the vendor" />
+      </details>
       {preview ? (
         <details className="mt-3 text-sm">
           <summary className="cursor-pointer text-muted hover:text-ink">Preview the email</summary>
