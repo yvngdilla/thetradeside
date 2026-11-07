@@ -1,26 +1,167 @@
 @import "tailwindcss";
 
+/*
+  Design notes
+  - Palette drawn from a designer's sample library: limewash paper, graphite ink,
+    a deep blue-green paint chip, aged brass for "filed", oxblood for "needs you".
+  - Bodoni Moda for names and page titles, Figtree for everything you read and click.
+  - One memorable element: each vendor's status is a memo-sample tag with a punched hole.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f6f6f2;
+  --sheet: #ffffff;
+  --ink: #23262a;
+  --muted: #676b6e;
+  --rule: #dcdcd4;
+  --chip: #2c4a57;
+  --chip-ink: #f3f6f6;
+  --brass: #9a7a3e;
+  --brass-wash: #f2ead9;
+  --oxblood: #7a2b36;
+  --oxblood-wash: #f6e6e6;
+  --mist: #e7ecec;
+  --focus: #2c4a57;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-sheet: var(--sheet);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-chip: var(--chip);
+  --color-chip-ink: var(--chip-ink);
+  --color-brass: var(--brass);
+  --color-brass-wash: var(--brass-wash);
+  --color-oxblood: var(--oxblood);
+  --color-oxblood-wash: var(--oxblood-wash);
+  --color-mist: var(--mist);
+  --font-sans: var(--font-figtree), system-ui, sans-serif;
+  --font-display: var(--font-bodoni), "Didot", Georgia, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--paper);
+  color: var(--ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Form controls share one quiet style. */
+.field {
+  width: 100%;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  color: var(--ink);
+}
+.field:focus {
+  border-color: var(--chip);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip) 18%, transparent);
+}
+textarea.field {
+  resize: vertical;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 6px;
+  padding: 0.55rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+.btn-primary {
+  background: var(--chip);
+  color: var(--chip-ink);
+}
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--chip) 88%, black);
+}
+.btn-quiet {
+  background: transparent;
+  border-color: var(--rule);
+  color: var(--ink);
+}
+.btn-quiet:hover:not(:disabled) {
+  background: var(--mist);
+}
+.btn-danger {
+  background: transparent;
+  color: var(--oxblood);
+  border-color: color-mix(in srgb, var(--oxblood) 35%, transparent);
+}
+
+.label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+.hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+/* Memo-sample status tag: a swatch tag with a punched hole on the left. */
+.tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 1.6rem;
+  padding: 0 0.7rem 0 1.45rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  clip-path: polygon(0.55rem 0, 100% 0, 100% 100%, 0.55rem 100%, 0 50%);
+  white-space: nowrap;
+}
+.tag::before {
+  content: "";
+  position: absolute;
+  left: 0.62rem;
+  top: 50%;
+  width: 0.36rem;
+  height: 0.36rem;
+  margin-top: -0.18rem;
+  border-radius: 50%;
+  background: var(--paper);
+}
+.tag-filed { background: var(--brass-wash); color: color-mix(in srgb, var(--brass) 80%, black); }
+.tag-ready { background: var(--chip); color: var(--chip-ink); }
+.tag-progress { background: var(--mist); color: var(--chip); }
+.tag-review { background: var(--oxblood-wash); color: var(--oxblood); }
+.tag-research { background: var(--mist); color: var(--muted); }
+.tag-failed { background: var(--oxblood); color: #fff; }
