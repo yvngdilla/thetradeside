@@ -6,6 +6,7 @@ import { fileByEmail, fileByPortal, markFiledManually, type ActionState } from "
 import { FormMessage, SubmitButton } from "@/components/ui";
 import type { Filing, Vendor } from "@/lib/types";
 import { APP_NAME } from "@/lib/brand";
+import { VENDOR_EMAIL_LIMITS, defaultVendorEmail, type VendorEmailParts } from "@/lib/vendor-email";
 
 type Way = "email" | "portal" | "manual";
 
@@ -15,7 +16,7 @@ export function FilePanel({
   gaps,
   outlookEmail,
   userEmail,
-  emailPreview,
+  emailParts,
   portalEnabled,
   lastFiled,
 }: {
@@ -24,7 +25,7 @@ export function FilePanel({
   gaps: string[];
   outlookEmail: string | null;
   userEmail: string;
-  emailPreview: { subject: string; text: string } | null;
+  emailParts: VendorEmailParts | null;
   portalEnabled: boolean;
   lastFiled: Filing | null;
 }) {
@@ -93,7 +94,7 @@ export function FilePanel({
             ))}
           </div>
           {way === "email" ? (
-            <EmailForm vendor={vendor} docs={docs} outlookEmail={outlookEmail} userEmail={userEmail} preview={emailPreview} />
+            <EmailForm vendor={vendor} docs={docs} outlookEmail={outlookEmail} userEmail={userEmail} parts={emailParts} />
           ) : way === "portal" ? (
             <PortalForm vendor={vendor} docs={docs} enabled={portalEnabled} />
           ) : (
@@ -105,9 +106,14 @@ export function FilePanel({
   );
 }
 
+/** Whether a document looks like one the vendor asked for, so it starts ticked. */
+function isRequested(label: string, required: string[]) {
+  const wanted = required.join(" ").toLowerCase();
+  return label.toLowerCase().split(/\W+/).some((w) => w.length > 3 && wanted.includes(w));
+}
+
 function DocumentChoices({ docs, required }: { docs: { id: string; label: string }[]; required: string[] }) {
   if (!docs.length) return null;
-  const wanted = required.join(" ").toLowerCase();
   return (
     <fieldset className="mt-4">
       <legend className="label">Also attach</legend>
@@ -118,7 +124,7 @@ function DocumentChoices({ docs, required }: { docs: { id: string; label: string
               type="checkbox"
               name="documents"
               value={d.id}
-              defaultChecked={d.label.toLowerCase().split(/\W+/).some((w) => w.length > 3 && wanted.includes(w))}
+              defaultChecked={isRequested(d.label, required)}
             />
             {d.label}
           </label>
@@ -133,18 +139,33 @@ function EmailForm({
   docs,
   outlookEmail,
   userEmail,
-  preview,
+  parts,
 }: {
   vendor: Vendor;
   docs: { id: string; label: string }[];
   outlookEmail: string | null;
   userEmail: string;
-  preview: { subject: string; text: string } | null;
+  parts: VendorEmailParts | null;
 }) {
   const [state, action] = useActionState<ActionState, FormData>(fileByEmail, undefined);
   const [delivery, setDelivery] = useState<"send" | "outlook">("send");
+  const [attached, setAttached] = useState(() => docs.filter((d) => isRequested(d.label, vendor.required_documents)).map((d) => d.id));
+  // Until the designer edits a field, it follows the standard wording (which names the ticked documents).
+  const [subject, setSubject] = useState<string | null>(null);
+  const [body, setBody] = useState<string | null>(null);
+  const standard = parts ? defaultVendorEmail(parts, docs.filter((d) => attached.includes(d.id)).map((d) => d.label)) : null;
+  const edited = subject !== null || body !== null;
+
   return (
-    <form action={action} className="mt-4">
+    <form
+      action={action}
+      className="mt-4"
+      onChange={(e) => {
+        if (e.target instanceof HTMLInputElement && e.target.name === "documents") {
+          setAttached(Array.from(e.currentTarget.querySelectorAll<HTMLInputElement>('input[name="documents"]:checked')).map((i) => i.value));
+        }
+      }}
+    >
       <input type="hidden" name="vendor_id" value={vendor.id} />
       <input type="hidden" name="delivery" value={delivery} />
       <label htmlFor="to" className="label">
@@ -152,19 +173,49 @@ function EmailForm({
       </label>
       <input id="to" name="to" type="email" required defaultValue={vendor.trade_email ?? ""} className="field" />
       <DocumentChoices docs={docs} required={vendor.required_documents} />
-      <details className="mt-4">
-        <summary className="text-sm text-muted cursor-pointer hover:text-ink">Add a note</summary>
-        <textarea id="note" name="note" rows={2} className="field mt-2" placeholder="Like a project name or your account number" aria-label="Note to the vendor" />
-      </details>
-      {preview ? (
-        <details className="mt-3 text-sm">
-          <summary className="cursor-pointer text-muted hover:text-ink">Preview the email</summary>
-          <div className="mt-2 border-l-2 border-rule pl-3">
-            <p className="font-semibold">{preview.subject}</p>
-            <p className="whitespace-pre-line mt-2 text-muted">{preview.text}</p>
-            <p className="mt-2 text-muted">Attached: signed resale certificate (PDF)</p>
+      {standard ? (
+        <div className="mt-5">
+          <label htmlFor="subject" className="label">
+            Subject
+          </label>
+          <input
+            id="subject"
+            name="subject"
+            required
+            maxLength={VENDOR_EMAIL_LIMITS.subject}
+            value={subject ?? standard.subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="field"
+          />
+          <label htmlFor="body" className="label mt-4">
+            Message
+          </label>
+          <textarea
+            id="body"
+            name="body"
+            required
+            rows={15}
+            maxLength={VENDOR_EMAIL_LIMITS.body}
+            value={body ?? standard.text}
+            onChange={(e) => setBody(e.target.value)}
+            className="field leading-6"
+          />
+          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+            <p className="hint">Edit anything, like adding a project name or account number.</p>
+            {edited ? (
+              <button
+                type="button"
+                className="hint underline underline-offset-2 hover:text-ink"
+                onClick={() => {
+                  setSubject(null);
+                  setBody(null);
+                }}
+              >
+                Use the standard wording
+              </button>
+            ) : null}
           </div>
-        </details>
+        </div>
       ) : null}
       {outlookEmail ? (
         <fieldset className="mt-4 text-sm space-y-1.5">
@@ -181,8 +232,8 @@ function EmailForm({
       ) : null}
       <p className="hint mt-3">
         {delivery === "send"
-          ? `Sent from ${APP_NAME} with the signed certificate attached. Replies go to ${userEmail}, and you get a copy.`
-          : `Creates a draft in ${outlookEmail} with the certificate attached. You press Send in Outlook.`}
+          ? `Sent from ${APP_NAME} with the signed certificate${attached.length ? " and ticked documents" : ""} attached. Replies go to ${userEmail}, and you get a copy.`
+          : `Creates a draft in ${outlookEmail} with the certificate${attached.length ? " and ticked documents" : ""} attached. You press Send in Outlook.`}
       </p>
       <div className="mt-4">
         {delivery === "send" ? (

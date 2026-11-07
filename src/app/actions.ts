@@ -13,6 +13,7 @@ import { createOutlookDraft, disconnectOutlook, findSentFiling } from "@/lib/out
 import { sendMail, systemEmail } from "@/lib/mailer";
 import { env } from "@/lib/env";
 import { APP_NAME } from "@/lib/brand";
+import { VENDOR_EMAIL_LIMITS } from "@/lib/vendor-email";
 
 export type ActionState = { error?: string; ok?: string; vendorId?: string } | undefined;
 
@@ -127,10 +128,13 @@ export async function fileByEmail(_: ActionState, fd: FormData): Promise<ActionS
   const ws = await getWorkspace();
   const vendorId = str(fd, "vendor_id");
   const to = str(fd, "to").toLowerCase();
-  const note = str(fd, "note");
+  const editedSubject = str(fd, "subject");
+  const editedBody = str(fd, "body");
   const delivery = str(fd, "delivery") === "outlook" ? "outlook" : "send";
   const documentIds = fd.getAll("documents").map(String);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return { error: "Enter the vendor's email address." };
+  if (editedSubject.length > VENDOR_EMAIL_LIMITS.subject) return { error: "Shorten the subject line." };
+  if (editedBody.length > VENDOR_EMAIL_LIMITS.body) return { error: "Shorten the message. It's over 5,000 characters." };
 
   const admin = createAdminClient();
   let filingId: string | null = null;
@@ -139,7 +143,7 @@ export async function fileByEmail(_: ActionState, fd: FormData): Promise<ActionS
     filingId = await newFiling(ws.teamId, vendorId, ws.userId, "email", documentIds);
     const cert = await buildCertificate(ctx, filingId);
     const docs = await loadDocuments(ws.teamId, documentIds);
-    const { subject, html, text } = certificateEmail(ctx.vendor, ctx.profile, ctx.signer, docs.map((d) => d.label), note);
+    const { subject, html, text } = certificateEmail(ctx.vendor, ctx.profile, ctx.signer, docs.map((d) => d.label), { subject: editedSubject, text: editedBody });
     const attachments = [
       { filename: cert.fileName, contentType: "application/pdf", bytes: cert.bytes },
       ...docs.map((d) => ({ filename: d.file_name, contentType: d.mime_type, bytes: d.bytes })),
