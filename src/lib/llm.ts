@@ -10,10 +10,13 @@ function anthropic() {
   return client;
 }
 
-/** One structured-output call: returns data matching `schema` or throws. */
+/**
+ * One structured-output call: returns data matching `schema` or throws.
+ * `prompt` is plain text, or content blocks when a file (PDF, image) goes with it.
+ */
 export async function structured<T extends z.ZodType>(opts: {
   system: string;
-  prompt: string;
+  prompt: string | Anthropic.ContentBlockParam[];
   schema: T;
   maxTokens?: number;
 }): Promise<z.infer<T>> {
