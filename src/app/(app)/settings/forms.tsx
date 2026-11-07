@@ -200,9 +200,7 @@ export function SignerForm({ signer, signatureUrl }: { signer: Signer | null; si
         <SignaturePad existingUrl={signatureUrl} />
       </div>
       <div className="sm:col-span-2">
-        <SubmitButton pending="Saving…" className="btn btn-quiet">
-          Save signing details
-        </SubmitButton>
+        <SubmitButton pending="Saving…">Save signing details</SubmitButton>
         <FormMessage state={state} />
       </div>
     </form>
