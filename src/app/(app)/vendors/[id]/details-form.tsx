@@ -62,7 +62,9 @@ export function VendorDetailsForm({ vendor, defaultDescription }: { vendor: Vend
         <textarea id="notes" name="notes" rows={3} defaultValue={vendor.notes ?? ""} className="field" />
       </div>
       <div className="sm:col-span-2">
-        <SubmitButton pending="Saving">Save details</SubmitButton>
+        <SubmitButton pending="Saving…" className="btn btn-quiet">
+          Save details
+        </SubmitButton>
         <FormMessage state={state} />
       </div>
     </form>

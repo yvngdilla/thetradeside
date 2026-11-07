@@ -1,5 +1,5 @@
 import "server-only";
-import { readFile } from "node:fs/promises";
+import { CDTFA_230_BASE64 } from "./cdtfa-230";
 import { PDFDocument, StandardFonts, TextAlignment } from "pdf-lib";
 import type { BusinessProfile, Signer } from "@/lib/types";
 import { fullAddress } from "@/lib/types";
@@ -22,8 +22,8 @@ interface FormDefinition {
   code: string;
   state: string;
   title: string;
-  /** Official PDF, referenced statically so the bundler ships it with the function. */
-  template: () => URL;
+  /** Official blank PDF. */
+  template: () => Uint8Array;
   fill: (form: ReturnType<PDFDocument["getForm"]>, input: CertificateInput) => void;
   /** Field names to drop before flattening (print/clear buttons). */
   removeFields: string[];
@@ -45,7 +45,7 @@ const CA_230: FormDefinition = {
   code: "CDTFA-230",
   state: "CA",
   title: "California General Resale Certificate (CDTFA-230)",
-  template: () => new URL("../../../forms/ca/cdtfa-230.pdf", import.meta.url),
+  template: () => new Uint8Array(Buffer.from(CDTFA_230_BASE64, "base64")),
   removeFields: ["print230", "clear230"],
   // Between the "Name of purchaser" field (top at y=170) and the
   // "Printed name of person signing" field (top at y=141).
@@ -81,7 +81,7 @@ export async function fillCertificate(code: string, input: CertificateInput): Pr
   const def = FORMS[code];
   if (!def) throw new Error(`Unknown form ${code}`);
 
-  const template = await readFile(def.template());
+  const template = def.template();
   const pdf = await PDFDocument.load(template);
   const form = pdf.getForm();
 

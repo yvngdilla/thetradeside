@@ -1,43 +1,76 @@
 @import "tailwindcss";
 
 /*
-  Design notes
-  - Palette drawn from a designer's sample library: limewash paper, graphite ink,
-    a deep blue-green paint chip, aged brass for "filed", oxblood for "needs you".
-  - Bodoni Moda for names and page titles, Figtree for everything you read and click.
-  - One memorable element: each vendor's status is a memo-sample tag with a punched hole.
+  The Trade Side, "Signature" direction. Source of truth: the design system
+  artifact (project/tokens.json). Signed, not stamped: forest is brand and
+  action, clay is only the pen stroke, alert means "this needs you".
 */
 :root {
-  --paper: #f6f6f2;
-  --sheet: #ffffff;
-  --ink: #23262a;
-  --muted: #676b6e;
-  --rule: #dcdcd4;
-  --chip: #2c4a57;
-  --chip-ink: #f3f6f6;
-  --brass: #9a7a3e;
-  --brass-wash: #f2ead9;
-  --oxblood: #7a2b36;
-  --oxblood-wash: #f6e6e6;
-  --mist: #e7ecec;
-  --focus: #2c4a57;
+  --paper: #f6efe9;
+  --sheet: #fffcf9;
+  --plaster: #f1e7df;
+  --rule: #e5d9cf;
+  --control: #928170;
+  --travertine: #c9bcae;
+  --ink: #1c1c1a;
+  --muted: #6a5f57;
+  --forest: #1f3a2e;
+  --on-forest: #f6efe9;
+  --forest-wash: #e3ebe5;
+  --clay: #d48a74;
+  --alert: #8a3a26;
+  --alert-wash: #f6dcd3;
+  --on-alert: #fffcf9;
+  --focus: var(--forest);
+  --shadow-field-focus: 0 0 0 3px rgba(31, 58, 46, 0.16);
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-pill: 999px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #131916;
+    --sheet: #1a211d;
+    --plaster: #222a25;
+    --rule: #2f3833;
+    --control: #737b75;
+    --travertine: #4d544f;
+    --ink: #efe8e1;
+    --muted: #a9a39b;
+    --forest: #9cc2ac;
+    --on-forest: #10201a;
+    --forest-wash: #1f2e26;
+    --clay: #e0a08c;
+    --alert: #f0a993;
+    --alert-wash: #3a231c;
+    --on-alert: #2a120c;
+    --shadow-field-focus: 0 0 0 3px rgba(156, 194, 172, 0.24);
+    color-scheme: dark;
+  }
 }
 
 @theme inline {
   --color-paper: var(--paper);
   --color-sheet: var(--sheet);
+  --color-plaster: var(--plaster);
+  --color-rule: var(--rule);
+  --color-control: var(--control);
+  --color-travertine: var(--travertine);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
-  --color-rule: var(--rule);
-  --color-chip: var(--chip);
-  --color-chip-ink: var(--chip-ink);
-  --color-brass: var(--brass);
-  --color-brass-wash: var(--brass-wash);
-  --color-oxblood: var(--oxblood);
-  --color-oxblood-wash: var(--oxblood-wash);
-  --color-mist: var(--mist);
-  --font-sans: var(--font-figtree), system-ui, sans-serif;
-  --font-display: var(--font-bodoni), "Didot", Georgia, serif;
+  --color-forest: var(--forest);
+  --color-on-forest: var(--on-forest);
+  --color-forest-wash: var(--forest-wash);
+  --color-clay: var(--clay);
+  --color-alert: var(--alert);
+  --color-alert-wash: var(--alert-wash);
+  --color-on-alert: var(--on-alert);
+  --font-sans: var(--font-instrument-sans), system-ui, sans-serif;
+  --font-display: var(--font-instrument-serif), "Iowan Old Style", Georgia, serif;
+  --radius-sm: 2px;
+  --radius-md: 4px;
 }
 
 html {
@@ -47,121 +80,222 @@ html {
 
 body {
   background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans);
   font-size: 15px;
-  line-height: 1.55;
+  line-height: 24px;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Instrument Serif is always weight 400; presence comes from size. */
+.font-display {
+  font-weight: 400;
+}
+
+/* App type scale */
+.t-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  line-height: 40px;
+  font-weight: 400;
+}
+.t-name {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 400;
+}
+.t-signature {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 24px;
+  line-height: 30px;
 }
 
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
-  border-radius: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation: none !important;
     transition: none !important;
   }
 }
 
-/* Form controls share one quiet style. */
+/* Field */
 .field {
+  box-sizing: border-box;
   width: 100%;
   background: var(--sheet);
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
   font: inherit;
   color: var(--ink);
 }
+.field::placeholder {
+  color: var(--muted);
+}
 .field:focus {
-  border-color: var(--chip);
+  border-color: var(--forest);
   outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip) 18%, transparent);
+  box-shadow: var(--shadow-field-focus);
+}
+.field[aria-invalid="true"] {
+  border-color: var(--alert);
 }
 textarea.field {
   resize: vertical;
 }
 
+.label {
+  display: block;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.hint {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Button: pills */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  border-radius: 6px;
-  padding: 0.55rem 1rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-  line-height: 1.2;
+  border-radius: var(--radius-pill);
+  padding: 11px 18px;
+  font: 600 14px/18px var(--font-sans);
   cursor: pointer;
   border: 1px solid transparent;
   white-space: nowrap;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out;
 }
 .btn:disabled {
   opacity: 0.55;
   cursor: progress;
 }
 .btn-primary {
-  background: var(--chip);
-  color: var(--chip-ink);
+  background: var(--forest);
+  color: var(--on-forest);
 }
 .btn-primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--chip) 88%, black);
+  filter: brightness(1.12);
 }
 .btn-quiet {
   background: transparent;
-  border-color: var(--rule);
+  border-color: var(--control);
   color: var(--ink);
 }
 .btn-quiet:hover:not(:disabled) {
-  background: var(--mist);
+  background: var(--plaster);
 }
 .btn-danger {
   background: transparent;
-  color: var(--oxblood);
-  border-color: color-mix(in srgb, var(--oxblood) 35%, transparent);
+  color: var(--alert);
+  border-color: var(--alert);
+}
+.btn-danger:hover:not(:disabled) {
+  background: var(--alert-wash);
 }
 
-.label {
-  display: block;
-  font-size: 0.82rem;
-  font-weight: 600;
-  margin-bottom: 0.3rem;
-}
-.hint {
-  font-size: 0.8rem;
-  color: var(--muted);
-  margin-top: 0.25rem;
-}
-
-/* Memo-sample status tag: a swatch tag with a punched hole on the left. */
+/* StatusTag: a pill with a small dot. Outlined when done, filled when it needs you. */
 .tag {
-  position: relative;
   display: inline-flex;
   align-items: center;
-  height: 1.6rem;
-  padding: 0 0.7rem 0 1.45rem;
-  font-size: 0.78rem;
+  gap: 6px;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 0 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  clip-path: polygon(0.55rem 0, 100% 0, 100% 100%, 0.55rem 100%, 0 50%);
+  line-height: 16px;
   white-space: nowrap;
 }
 .tag::before {
   content: "";
-  position: absolute;
-  left: 0.62rem;
-  top: 50%;
-  width: 0.36rem;
-  height: 0.36rem;
-  margin-top: -0.18rem;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--paper);
+  background: currentColor;
 }
-.tag-filed { background: var(--brass-wash); color: color-mix(in srgb, var(--brass) 80%, black); }
-.tag-ready { background: var(--chip); color: var(--chip-ink); }
-.tag-progress { background: var(--mist); color: var(--chip); }
-.tag-review { background: var(--oxblood-wash); color: var(--oxblood); }
-.tag-research { background: var(--mist); color: var(--muted); }
-.tag-failed { background: var(--oxblood); color: #fff; }
+.tag-filed {
+  border-color: var(--forest);
+  color: var(--forest);
+  background: transparent;
+}
+.tag-ready {
+  background: var(--forest);
+  color: var(--on-forest);
+}
+.tag-progress {
+  background: var(--forest-wash);
+  color: var(--forest);
+}
+.tag-review {
+  background: var(--alert-wash);
+  color: var(--alert);
+}
+.tag-research {
+  background: var(--plaster);
+  color: var(--muted);
+}
+.tag-research::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.tag-failed {
+  background: var(--alert);
+  color: var(--on-alert);
+}
+
+/* Sheets: raised surfaces separated by a hairline, never a shadow. */
+.sheet {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+}
+
+/* Segmented choice (filing method) */
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+}
+.segmented button {
+  border-radius: var(--radius-pill);
+  padding: 6px 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.segmented button[aria-checked="true"] {
+  background: var(--forest);
+  color: var(--on-forest);
+}
+.segmented button:not([aria-checked="true"]):hover {
+  color: var(--ink);
+  background: var(--plaster);
+}
+
+a.link {
+  color: var(--forest);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}

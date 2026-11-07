@@ -37,7 +37,7 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="font-display text-4xl sm:text-5xl">Settings</h1>
+      <h1 className="t-title">Settings</h1>
       {sp.welcome ? (
         <p className="mt-3 text-muted">Fill in your certificate details once. Every certificate is made from them.</p>
       ) : null}
@@ -63,7 +63,7 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
                 <p className="text-sm text-muted truncate">{d.file_name}</p>
               </div>
               <form action={deleteDocument.bind(null, d.id)} className="ml-auto">
-                <button className="text-sm text-muted hover:text-oxblood">Remove</button>
+                <button className="text-sm text-muted hover:text-alert">Remove</button>
               </form>
             </li>
           ))}
@@ -77,7 +77,7 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
         title="Email"
         intro="Certificates are sent from Trade Side under your firm's name. Replies come to your own inbox and you get a copy of each one. If you'd rather send from Outlook yourself, connect it here to get drafts instead."
       >
-        {outlookMsg ? <p className="mb-3 text-sm text-chip">{outlookMsg}</p> : null}
+        {outlookMsg ? <p className="mb-3 text-sm text-forest">{outlookMsg}</p> : null}
         {!has("MICROSOFT_CLIENT_ID") ? (
           <p className="text-sm text-muted">Nothing to set up. Outlook drafts aren&rsquo;t available on this site yet.</p>
         ) : outlook ? (
@@ -98,7 +98,7 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
 
       <Section id="team" title="Team" intro={`People who can sign in to ${ws.teamName}.`}>
         <ul className="divide-y divide-rule border-y border-rule mb-6">
-          {(members ?? []).map((m) => (
+          {((members ?? []) as { email: string; role: string; joined_at: string | null }[]).map((m) => (
             <li key={m.email} className="flex items-center gap-4 py-3">
               <div className="min-w-0">
                 <p className="truncate">{m.email}</p>
@@ -109,7 +109,7 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
               </div>
               {ws.role === "owner" && m.email.toLowerCase() !== ws.email.toLowerCase() ? (
                 <form action={removeMember.bind(null, m.email)} className="ml-auto">
-                  <button className="text-sm text-muted hover:text-oxblood">Remove</button>
+                  <button className="text-sm text-muted hover:text-alert">Remove</button>
                 </form>
               ) : null}
             </li>
@@ -124,7 +124,7 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
 function Section({ id, title, intro, children }: { id: string; title: string; intro: string; children: React.ReactNode }) {
   return (
     <section id={id} className="mt-14 scroll-mt-20">
-      <h2 className="font-display text-3xl">{title}</h2>
+      <h2 className="t-name">{title}</h2>
       <p className="text-muted mt-1 mb-6 max-w-prose">{intro}</p>
       {children}
     </section>

@@ -22,10 +22,10 @@ export function AddVendorForm() {
           placeholder="vendor website, like arteriorshome.com"
           className="field !text-base !py-2.5"
         />
-        <SubmitButton pending="Adding">Add vendor</SubmitButton>
+        <SubmitButton pending="Adding…">Add vendor</SubmitButton>
       </div>
       {state?.error ? (
-        <p className="text-sm mt-2 text-oxblood">
+        <p className="text-sm mt-2 text-alert">
           {state.error}{" "}
           {state.vendorId ? (
             <Link href={`/vendors/${state.vendorId}`} className="underline underline-offset-4 font-semibold">
@@ -34,7 +34,7 @@ export function AddVendorForm() {
           ) : null}
         </p>
       ) : state?.ok ? (
-        <p className="text-sm mt-2 text-chip">
+        <p className="text-sm mt-2 text-forest">
           {state.ok}. This takes about a minute.{" "}
           {state.vendorId ? (
             <Link href={`/vendors/${state.vendorId}`} className="underline underline-offset-4 font-semibold">

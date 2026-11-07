@@ -6,10 +6,6 @@ const nextConfig: NextConfig = {
       "*.css": { loaders: ["@tailwindcss/turbopack"], as: "*.css" },
     },
   },
-  // The official state form PDFs are read from disk at runtime.
-  outputFileTracingIncludes: {
-    "/**": ["./forms/**/*"],
-  },
   // Browser automation and PDF libraries run as plain Node packages, not bundled.
   serverExternalPackages: ["@browserbasehq/stagehand", "@browserbasehq/sdk", "pdf-lib"],
   experimental: {

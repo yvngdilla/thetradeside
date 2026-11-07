@@ -54,7 +54,7 @@ export default async function VendorPage(props: PageProps<"/vendors/[id]">) {
 
       <header className="mt-4 flex flex-wrap items-start gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <h1 className="font-display text-4xl sm:text-5xl leading-tight break-words">{vendor.display_name || vendor.domain}</h1>
+          <h1 className="t-title break-words">{vendor.display_name || vendor.domain}</h1>
           <p className="mt-1 text-muted">
             <a href={`https://${vendor.domain}`} target="_blank" rel="noreferrer" className="hover:text-ink underline-offset-4 hover:underline">
               {vendor.domain}
@@ -70,12 +70,12 @@ export default async function VendorPage(props: PageProps<"/vendors/[id]">) {
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-10">
           <section>
-            <h2 className="font-display text-2xl">What we found</h2>
+            <h2 className="t-name">What we found</h2>
             {vendor.status === "researching" ? (
               <p className="mt-3 text-muted">Reading {vendor.domain} for its trade program. This usually takes under a minute.</p>
             ) : vendor.status === "failed" ? (
               <div className="mt-3">
-                <p className="text-oxblood">{vendor.research_error}</p>
+                <p className="text-alert">{vendor.research_error}</p>
                 <p className="text-muted mt-1 text-sm">Add the details below by hand, or try the lookup again.</p>
               </div>
             ) : (
@@ -113,7 +113,7 @@ export default async function VendorPage(props: PageProps<"/vendors/[id]">) {
                     </>
                   ) : null}
                 </dl>
-                {vendor.notes ? <p className="text-sm border-l-2 border-oxblood pl-3 max-w-prose">{vendor.notes}</p> : null}
+                {vendor.notes ? <p className="text-sm border-l-2 border-alert pl-3 max-w-prose">{vendor.notes}</p> : null}
                 {vendor.research_sources.length ? (
                   <details className="text-sm text-muted">
                     <summary className="cursor-pointer hover:text-ink">Pages we read</summary>
@@ -138,14 +138,14 @@ export default async function VendorPage(props: PageProps<"/vendors/[id]">) {
           </section>
 
           <section>
-            <h2 className="font-display text-2xl">Details</h2>
+            <h2 className="t-name">Details</h2>
             <p className="text-sm text-muted mt-1">Correct anything the lookup got wrong. The certificate uses these.</p>
             <VendorDetailsForm vendor={vendor} defaultDescription={profile?.property_description ?? ""} />
           </section>
 
           {filings.length ? (
             <section>
-              <h2 className="font-display text-2xl">History</h2>
+              <h2 className="t-name">History</h2>
               <ol className="mt-4 space-y-6">
                 {filings.map((f) => (
                   <li key={f.id} className="border-l border-rule pl-4">
@@ -161,11 +161,11 @@ export default async function VendorPage(props: PageProps<"/vendors/[id]">) {
                         View certificate
                       </a>
                     ) : null}
-                    {f.error ? <p className="text-sm text-oxblood mt-1">{f.error}</p> : null}
+                    {f.error ? <p className="text-sm text-alert mt-1">{f.error}</p> : null}
                     {f.steps.length ? (
                       <ul className="mt-2 text-sm text-muted space-y-0.5">
                         {f.steps.map((s, i) => (
-                          <li key={i} className={s.ok ? "" : "text-oxblood"}>
+                          <li key={i} className={s.ok ? "" : "text-alert"}>
                             {s.text}
                           </li>
                         ))}
@@ -267,7 +267,7 @@ function ActiveFiling({ filing }: { filing: Filing }) {
       {filing.open_items.length ? (
         <ul className="mt-3 space-y-1.5 text-sm">
           {filing.open_items.map((item, i) => (
-            <li key={i} className="border-l-2 border-oxblood pl-2">
+            <li key={i} className="border-l-2 border-alert pl-2">
               <span className="font-semibold">{item.label}:</span> {item.reason}
             </li>
           ))}
@@ -278,7 +278,7 @@ function ActiveFiling({ filing }: { filing: Filing }) {
           <iframe
             src={filing.live_view_url}
             title="Vendor application"
-            className="w-full aspect-[4/3] rounded-md border border-rule bg-sheet"
+            className="w-full aspect-[4/3] rounded-[var(--radius-sm)] border border-rule bg-sheet"
             sandbox="allow-same-origin allow-scripts"
             allow="clipboard-read; clipboard-write"
           />
@@ -303,8 +303,8 @@ function ActiveFiling({ filing }: { filing: Filing }) {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="bg-sheet border border-rule rounded-lg p-5">
-      <h2 className="font-display text-2xl mb-3">{title}</h2>
+    <section className="sheet p-6">
+      <h2 className="t-name mb-3">{title}</h2>
       {children}
     </section>
   );

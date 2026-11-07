@@ -5,6 +5,7 @@ const PUBLIC_PATHS = ["/login", "/auth/", "/api/cron/", "/api/outlook/callback"]
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+  if (process.env.VERCEL_ENV !== "production" && (process.env.DEMO_MODE === "1" || process.env.VERCEL_GIT_COMMIT_REF === "demo")) return response;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

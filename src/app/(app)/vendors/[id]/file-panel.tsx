@@ -35,8 +35,8 @@ export function FilePanel({
 
   if (vendor.status === "researching") {
     return (
-      <section className="bg-sheet border border-rule rounded-lg p-5">
-        <h2 className="font-display text-2xl">File the certificate</h2>
+      <section className="sheet p-6">
+        <h2 className="t-name">File the certificate</h2>
         <p className="text-muted mt-2">Available once the lookup finishes.</p>
       </section>
     );
@@ -44,8 +44,8 @@ export function FilePanel({
 
   if (vendor.status === "filed" && !refile) {
     return (
-      <section className="bg-sheet border border-rule rounded-lg p-5">
-        <h2 className="font-display text-2xl">Filed</h2>
+      <section className="sheet p-6">
+        <h2 className="t-name">Filed</h2>
         <p className="mt-2">
           Certificate on file since{" "}
           {vendor.filed_at ? new Date(vendor.filed_at).toLocaleDateString("en-US", { dateStyle: "long" }) : "earlier"}.
@@ -65,8 +65,8 @@ export function FilePanel({
   }
 
   return (
-    <section className="bg-sheet border border-rule rounded-lg p-5">
-      <h2 className="font-display text-2xl">File the certificate</h2>
+    <section className="sheet p-6">
+      <h2 className="t-name">File the certificate</h2>
       {gaps.length ? (
         <p className="mt-3 text-sm">
           Finish your details in{" "}
@@ -77,7 +77,7 @@ export function FilePanel({
         </p>
       ) : (
         <>
-          <div role="radiogroup" aria-label="How to file" className="mt-4 grid grid-cols-3 gap-1 bg-mist rounded-md p-1 text-sm">
+          <div role="radiogroup" aria-label="How to file" className="mt-4 segmented">
             {(
               [
                 ["email", "Email"],
@@ -91,7 +91,6 @@ export function FilePanel({
                 role="radio"
                 aria-checked={way === key}
                 onClick={() => setWay(key)}
-                className={`py-1.5 rounded ${way === key ? "bg-sheet font-semibold text-chip shadow-sm" : "text-muted hover:text-ink"}`}
               >
                 {label}
               </button>
@@ -191,9 +190,9 @@ function EmailForm({
       </p>
       <div className="mt-4">
         {delivery === "send" ? (
-          <SubmitButton pending="Sending">Send to vendor</SubmitButton>
+          <SubmitButton pending="Sending…">Send to vendor</SubmitButton>
         ) : (
-          <SubmitButton pending="Creating draft">Create Outlook draft</SubmitButton>
+          <SubmitButton pending="Creating draft…">Create Outlook draft</SubmitButton>
         )}
       </div>
       <FormMessage state={state} />
@@ -220,7 +219,7 @@ function PortalForm({ vendor, docs, enabled }: { vendor: Vendor; docs: { id: str
       </p>
       <DocumentChoices docs={docs} required={vendor.required_documents} />
       <div className="mt-4">
-        <SubmitButton pending="Starting">Fill in the application</SubmitButton>
+        <SubmitButton pending="Starting…">Fill in the application</SubmitButton>
       </div>
       <FormMessage state={state} />
     </form>
@@ -241,7 +240,7 @@ function ManualForm({ vendor }: { vendor: Vendor }) {
       </label>
       <input id="note" name="note" className="field" placeholder="Like “Emailed to rep, Dana”" />
       <div className="mt-4">
-        <SubmitButton pending="Saving">Sign and mark as filed</SubmitButton>
+        <SubmitButton pending="Saving…">Sign and mark as filed</SubmitButton>
       </div>
       <FormMessage state={state} />
     </form>

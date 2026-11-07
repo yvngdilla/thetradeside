@@ -10,7 +10,7 @@ export function NavLink({ href, children }: { href: string; children: React.Reac
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`px-3 py-1.5 rounded-md ${active ? "bg-mist text-chip font-semibold" : "text-muted hover:text-ink"}`}
+      className={`px-3 py-1.5 rounded-full ${active ? "bg-plaster text-forest font-semibold" : "text-muted hover:text-ink"}`}
     >
       {children}
     </Link>

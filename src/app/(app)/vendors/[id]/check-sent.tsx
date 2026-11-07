@@ -8,7 +8,7 @@ export function CheckSentButton({ filingId }: { filingId: string }) {
   const [state, action] = useActionState<ActionState, FormData>(() => checkEmailSent(filingId), undefined);
   return (
     <form action={action}>
-      <SubmitButton className="btn btn-quiet" pending="Checking">
+      <SubmitButton className="btn btn-quiet" pending="Checking…">
         I sent it
       </SubmitButton>
       <FormMessage state={state} />
