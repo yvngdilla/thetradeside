@@ -1,4 +1,4 @@
--- ResaleForm initial schema
+-- Trade Side initial schema
 -- Multi-tenant: every row belongs to a workspace (team). Members see only their workspace.
 
 create extension if not exists pgcrypto;
@@ -163,7 +163,7 @@ create table public.outlook_connections (
 
 -- updated_at triggers -----------------------------------------------------------
 create or replace function public.touch_updated_at() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = '' as $$
 begin
   new.updated_at = now();
   return new;
@@ -180,7 +180,7 @@ create trigger signers_touch before update on public.signers
 
 -- Row level security ------------------------------------------------------------
 create or replace function public.is_team_member(t uuid) returns boolean
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = '' as $$
   select exists (
     select 1 from public.team_members
     where team_id = t and user_id = auth.uid()
@@ -188,7 +188,7 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 create or replace function public.is_team_owner(t uuid) returns boolean
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = '' as $$
   select exists (
     select 1 from public.team_members
     where team_id = t and user_id = auth.uid() and role = 'owner'
@@ -234,3 +234,10 @@ create policy filings_read on public.filings for select using (public.is_team_me
 -- checking workspace membership. Paths are prefixed with the team id.
 insert into storage.buckets (id, name, public) values ('workspace-files', 'workspace-files', false)
   on conflict (id) do nothing;
+
+-- The membership helpers only answer for the signed-in caller, but there's no
+-- reason for signed-out visitors to call them.
+revoke execute on function public.is_team_member(uuid) from public, anon;
+revoke execute on function public.is_team_owner(uuid) from public, anon;
+grant execute on function public.is_team_member(uuid) to authenticated;
+grant execute on function public.is_team_owner(uuid) to authenticated;
