@@ -16,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       ) : null}
       <header className="border-b border-rule bg-paper/95 backdrop-blur sticky top-0 z-10">
         <div className="mx-auto max-w-[960px] px-4 sm:px-8 h-16 flex items-center gap-3 sm:gap-6">
-          <Link href="/" aria-label="The Trade Side, vendors" className="shrink-0">
+          <Link href="/" aria-label="Trade Side, vendors" className="shrink-0">
             <Wordmark className="h-6 sm:h-7 w-auto" />
           </Link>
           <nav className="flex gap-1 text-sm">
