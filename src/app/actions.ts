@@ -14,6 +14,7 @@ import { sendMail, systemEmail } from "@/lib/mailer";
 import { env, has } from "@/lib/env";
 import { IMPORT_MAX_BYTES, IMPORT_TYPES, readCertificateDetails, type ImportType, type ImportedDetails } from "@/lib/certificate-import";
 import { APP_NAME } from "@/lib/brand";
+import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES, documentLabelFromFileName } from "@/lib/documents";
 
 export type ActionState = { error?: string; ok?: string; vendorId?: string } | undefined;
 
@@ -339,16 +340,14 @@ export async function saveSigner(_: ActionState, fd: FormData): Promise<ActionSt
   return { ok: "Signing details saved" };
 }
 
-const ALLOWED_DOC_TYPES = ["application/pdf", "image/png", "image/jpeg"];
-
+/** Adds one document. Without a name, one is taken from the file name; it can be renamed later. */
 export async function uploadDocument(_: ActionState, fd: FormData): Promise<ActionState> {
   const ws = await getWorkspace();
   const file = fd.get("file");
-  const label = str(fd, "label");
   if (!(file instanceof File) || file.size === 0) return { error: "Choose a file." };
-  if (!label) return { error: "Name the document, like \"Seller's permit\"." };
-  if (!ALLOWED_DOC_TYPES.includes(file.type)) return { error: "Upload a PDF, PNG or JPG." };
-  if (file.size > 2_500_000) return { error: "Keep documents under 2.5 MB so they fit in an email." };
+  const label = (str(fd, "label") || documentLabelFromFileName(file.name)).slice(0, 80);
+  if (!DOCUMENT_TYPES.includes(file.type)) return { error: `${file.name} isn't a PDF, PNG or JPG.` };
+  if (file.size > DOCUMENT_MAX_BYTES) return { error: `${file.name} is over 2.5 MB. Keep documents small enough to fit in an email.` };
 
   const id = crypto.randomUUID();
   const safeName = file.name.replace(/[^\w.\-]+/g, "_");
@@ -361,6 +360,17 @@ export async function uploadDocument(_: ActionState, fd: FormData): Promise<Acti
   if (error) return { error: "Couldn't save the document." };
   revalidatePath("/settings");
   return { ok: `${label} added` };
+}
+
+export async function renameDocument(id: string, label: string): Promise<ActionState> {
+  const ws = await getWorkspace();
+  const clean = label.trim().slice(0, 80);
+  if (!clean) return { error: "Give the document a name, like \"Seller's permit\"." };
+  const supabase = await createUserClient();
+  const { error } = await supabase.from("team_documents").update({ label: clean }).eq("id", id).eq("team_id", ws.teamId);
+  if (error) return { error: "Couldn't rename the document." };
+  revalidatePath("/settings");
+  return { ok: "Renamed" };
 }
 
 export async function deleteDocument(id: string) {

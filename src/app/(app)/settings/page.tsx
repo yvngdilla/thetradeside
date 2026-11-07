@@ -4,8 +4,8 @@ import { getWorkspace, loadProfileAndSigner } from "@/lib/workspace";
 import { getOutlookConnection } from "@/lib/outlook";
 import { has } from "@/lib/env";
 import type { TeamDocument } from "@/lib/types";
-import { deleteDocument, disconnectOutlookAction, removeMember } from "@/app/actions";
-import { DocumentForm, InviteForm, ProfileForm, SignerForm } from "./forms";
+import { disconnectOutlookAction, removeMember } from "@/app/actions";
+import { Documents, InviteForm, ProfileForm, SignerForm } from "./forms";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -62,21 +62,7 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
         title="Documents"
         intro="Files some vendors ask for alongside the certificate, like a copy of your seller's permit, business license or W-9."
       >
-        <ul className="divide-y divide-rule border-y border-rule mb-6">
-          {((docs ?? []) as TeamDocument[]).map((d) => (
-            <li key={d.id} className="flex items-center gap-4 py-3">
-              <div className="min-w-0">
-                <p className="font-semibold">{d.label}</p>
-                <p className="text-sm text-muted truncate">{d.file_name}</p>
-              </div>
-              <form action={deleteDocument.bind(null, d.id)} className="ml-auto">
-                <button className="text-sm text-muted hover:text-alert">Remove</button>
-              </form>
-            </li>
-          ))}
-          {!docs?.length ? <li className="py-3 text-sm text-muted">No documents yet.</li> : null}
-        </ul>
-        <DocumentForm />
+        <Documents docs={((docs ?? []) as TeamDocument[]).map(({ id, label, file_name }) => ({ id, label, file_name }))} />
       </Section>
 
       <Section
