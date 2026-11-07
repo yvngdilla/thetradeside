@@ -8,21 +8,21 @@ export const metadata: Metadata = { title: "Sign in" };
 export default async function LoginPage(props: PageProps<"/login">) {
   const { error } = await props.searchParams;
   return (
-    <main className="min-h-dvh grid md:grid-cols-[1.1fr_1fr]">
-      <section className="bg-forest text-on-forest px-6 py-10 md:px-14 md:py-16 flex flex-col justify-between rounded-[var(--radius-sm)] md:m-3">
+    <main className="min-h-dvh grid grid-rows-[auto_1fr] md:grid-rows-1 md:grid-cols-[1.1fr_1fr]">
+      <section className="bg-forest text-on-forest px-6 py-7 md:px-14 md:py-16 flex flex-col justify-between rounded-[var(--radius-sm)] md:m-3">
         <Wordmark tone="on-forest" className="h-9 w-auto self-start" />
-        <div className="max-w-md my-16">
-          <h1 className="font-display text-5xl md:text-[54px] md:leading-[56px]">
+        <div className="max-w-md mt-8 md:my-16">
+          <h1 className="font-display text-4xl leading-[42px] md:text-[54px] md:leading-[56px]">
             Every vendor, <em>one certificate.</em>
           </h1>
-          <p className="mt-6 text-lg leading-7 text-on-forest/85">
+          <p className="mt-4 md:mt-6 text-base leading-6 md:text-lg md:leading-7 text-on-forest/85">
             Give it a vendor&rsquo;s website. It finds where the certificate goes, fills it in for your signature, and keeps a record of who
             has it on file.
           </p>
         </div>
-        <p className="text-sm text-on-forest/70">{APP_TAGLINE}</p>
+        <p className="hidden md:block text-sm text-on-forest/70">{APP_TAGLINE}</p>
       </section>
-      <section className="px-6 py-12 md:px-14 md:py-16 flex items-center">
+      <section className="px-6 pt-8 pb-12 md:px-14 md:py-16 flex md:items-center">
         <div className="w-full max-w-sm">
           <h2 className="t-title">Sign in</h2>
           <p className="text-muted mt-2">
