@@ -3,6 +3,7 @@ import { BUCKET, createAdminClient } from "@/lib/supabase/server";
 import { certificateFileName, fillCertificate, formForState } from "@/lib/forms";
 import type { BusinessProfile, Signer, TeamDocument, Vendor } from "@/lib/types";
 import { profileGaps } from "@/lib/types";
+import { defaultVendorEmail, vendorEmailHtml, vendorEmailParts } from "@/lib/vendor-email";
 
 export const paths = {
   signature: (teamId: string, userId: string) => `${teamId}/signatures/${userId}.png`,
@@ -63,40 +64,21 @@ export async function loadDocuments(teamId: string, ids: string[]): Promise<(Tea
   return Promise.all(((data ?? []) as TeamDocument[]).map(async (d) => ({ ...d, bytes: await download(d.file_path) })));
 }
 
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
-}
-
-/** The cover email. Plain and short, written to read like the designer wrote it. */
+/**
+ * The email that goes to the vendor. Uses the subject and message the designer
+ * edited in the filing panel when given, otherwise the standard wording.
+ */
 export function certificateEmail(
   vendor: Vendor,
   profile: BusinessProfile,
   signer: Signer,
   documentLabels: string[],
-  note = "",
+  edited?: { subject?: string; text?: string },
 ) {
-  const vendorName = vendor.display_name || vendor.seller_name || vendor.domain;
-  const subject = `Resale certificate and trade account: ${profile.business_name}`;
-  const extras = documentLabels.length ? ` I've also included our ${joinList(documentLabels.map((l) => l.toLowerCase()))}.` : "";
-  const paragraphs = [
-    `Hello ${vendorName} team,`,
-    `Attached is the California resale certificate for ${profile.business_name}.${extras} Please keep it on file for our purchases and set us up with a trade account if we don't have one yet.`,
-    note.trim(),
-    profile.email_note,
-    `Let me know if you need anything else from us.`,
-  ].filter(Boolean);
-  const signature = [signer.printed_name, signer.title, profile.business_name, profile.phone, profile.website].filter(Boolean);
-
-  const html =
-    paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("") +
-    `<p>Thank you,<br>${signature.map(escapeHtml).join("<br>")}</p>`;
-  const text = `${paragraphs.join("\n\n")}\n\nThank you,\n${signature.join("\n")}`;
-  return { subject, html, text };
-}
-
-function joinList(items: string[]) {
-  if (items.length <= 1) return items.join("");
-  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+  const standard = defaultVendorEmail(vendorEmailParts(vendor, profile, signer), documentLabels);
+  const subject = edited?.subject?.trim() || standard.subject;
+  const text = edited?.text?.trim() || standard.text;
+  return { subject, html: vendorEmailHtml(text), text };
 }
 
 export async function addStep(filingId: string, text: string, ok = true) {
