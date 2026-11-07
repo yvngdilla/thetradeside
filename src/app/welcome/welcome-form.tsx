@@ -14,8 +14,8 @@ export function WelcomeForm() {
         </label>
         <input id="name" name="name" required className="field" placeholder="Studio name" />
       </div>
-      <SubmitButton pending="Creating">Create workspace</SubmitButton>
-      {state?.error ? <p className="text-sm text-oxblood">{state.error}</p> : null}
+      <SubmitButton pending="Creating…">Create workspace</SubmitButton>
+      {state?.error ? <p className="text-sm text-alert">{state.error}</p> : null}
     </form>
   );
 }

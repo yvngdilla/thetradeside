@@ -2,6 +2,29 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/server";
 import { researchVendor, suggestDescription } from "@/lib/research";
 import { nameKey } from "@/lib/domain";
+import { isDemo } from "@/lib/demo/store";
+import type { ResearchResult } from "@/lib/research";
+
+/** Demo mode: a stand-in lookup, clearly labelled, so no paid crawl runs. */
+async function demoResearch(domain: string): Promise<ResearchResult> {
+  await new Promise((r) => setTimeout(r, 4000));
+  const brand = domain.split(".")[0].replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return {
+    display_name: brand,
+    seller_name: brand,
+    method: "email",
+    trade_email: null,
+    trade_url: null,
+    application_url: null,
+    own_form_url: null,
+    required_documents: ["California resale certificate"],
+    product_categories: "furniture and home accessories",
+    discount_info: null,
+    summary: `Demo mode: no real lookup ran for ${domain}. In the live app this is where we say how they take certificates. Add their trade email below to try filing.`,
+    confidence: "low",
+    sources: [],
+  };
+}
 
 /** Runs vendor research and stores the result. Safe to call from after(). */
 export async function runResearchJob(vendorId: string) {
@@ -12,7 +35,7 @@ export async function runResearchJob(vendorId: string) {
   await admin.from("vendors").update({ status: "researching", research_error: null }).eq("id", vendorId);
 
   try {
-    const r = await researchVendor(vendor.domain);
+    const r = isDemo() ? await demoResearch(vendor.domain) : await researchVendor(vendor.domain);
 
     const { data: profile } = await admin
       .from("business_profiles")

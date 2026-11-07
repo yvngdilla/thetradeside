@@ -53,5 +53,7 @@ export function supabasePublicKey(): string | undefined {
 }
 
 export function has(name: string): boolean {
+  // Demo mode shows the online-form option with a simulated run.
+  if (name === "BROWSERBASE_API_KEY" && process.env.VERCEL_ENV !== "production" && (process.env.DEMO_MODE === "1" || process.env.VERCEL_GIT_COMMIT_REF === "demo")) return true;
   return Boolean(process.env[name]);
 }

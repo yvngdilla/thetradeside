@@ -9,7 +9,7 @@ export function LoginForm() {
 
   if (state?.sentTo) {
     return (
-      <div className="mt-8 border-l-2 border-brass pl-4">
+      <div className="mt-8 border-l-2 border-forest pl-4">
         <p className="font-semibold">Check your email</p>
         <p className="text-muted mt-1">
           We sent a sign-in link to {state.sentTo}. It works once and expires in an hour.
@@ -26,8 +26,8 @@ export function LoginForm() {
         </label>
         <input id="email" name="email" type="email" autoComplete="email" required className="field" placeholder="you@yourstudio.com" />
       </div>
-      <SubmitButton pending="Sending link">Email me a sign-in link</SubmitButton>
-      {state?.error ? <p className="text-sm text-oxblood">{state.error}</p> : null}
+      <SubmitButton pending="Sending link…">Email me a sign-in link</SubmitButton>
+      {state?.error ? <p className="text-sm text-alert">{state.error}</p> : null}
     </form>
   );
 }

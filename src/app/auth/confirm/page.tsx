@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createUserClient } from "@/lib/supabase/server";
 import { claimInvites } from "@/lib/workspace";
-import { APP_NAME } from "@/lib/brand";
+import { Wordmark } from "@/components/wordmark";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -23,8 +23,8 @@ export default async function ConfirmPage(props: PageProps<"/auth/confirm">) {
   return (
     <main className="min-h-dvh flex items-center justify-center px-6">
       <form action={confirm} className="w-full max-w-sm">
-        <p className="font-display text-2xl">{APP_NAME}</p>
-        <h1 className="font-display text-4xl mt-10">Sign in</h1>
+        <Wordmark className="h-8 w-auto" />
+        <h1 className="t-title mt-10">Sign in</h1>
         <p className="text-muted mt-3">Continue to your workspace.</p>
         <input type="hidden" name="token_hash" value={token_hash} />
         <button className="btn btn-primary mt-8">Continue</button>

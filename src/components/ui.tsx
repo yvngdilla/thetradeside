@@ -24,7 +24,7 @@ export function SubmitButton({
 export function FormMessage({ state }: { state?: { error?: string; ok?: string } }) {
   if (!state?.error && !state?.ok) return null;
   return (
-    <p role="status" className={`text-sm mt-2 ${state.error ? "text-oxblood" : "text-chip"}`}>
+    <p role="status" className={`text-sm mt-2 ${state.error ? "text-alert" : "text-forest"}`}>
       {state.error ?? state.ok}
     </p>
   );

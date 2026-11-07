@@ -1,19 +1,34 @@
 import type { Metadata } from "next";
-import { Bodoni_Moda, Figtree } from "next/font/google";
+import localFont from "next/font/local";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
 import "./globals.css";
 
-const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree" });
-const bodoni = Bodoni_Moda({ subsets: ["latin"], variable: "--font-bodoni", weight: ["400", "500", "600"] });
+// Instrument Serif (400, roman and italic) for display; Instrument Sans for everything read or clicked.
+const serif = localFont({
+  src: [
+    { path: "./fonts/InstrumentSerif-Regular.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/InstrumentSerif-Italic.woff2", weight: "400", style: "italic" },
+  ],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
+const sans = localFont({
+  src: [
+    { path: "./fonts/InstrumentSans-Variable.woff2", weight: "400 700", style: "normal" },
+    { path: "./fonts/InstrumentSans-Italic-Variable.woff2", weight: "400 700", style: "italic" },
+  ],
+  variable: "--font-instrument-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: { default: APP_NAME, template: `%s | ${APP_NAME}` },
+  title: { default: `The ${APP_NAME}`, template: `%s | ${APP_NAME}` },
   description: APP_TAGLINE,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${figtree.variable} ${bodoni.variable}`}>
+    <html lang="en" className={`${serif.variable} ${sans.variable}`}>
       <body className="min-h-dvh">{children}</body>
     </html>
   );

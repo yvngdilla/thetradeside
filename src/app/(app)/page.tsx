@@ -44,7 +44,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
       <AutoRefresh active={vendors.some((v) => v.status === "researching")} />
 
       <section className="max-w-2xl">
-        <h1 className="font-display text-4xl sm:text-5xl leading-tight">Vendors</h1>
+        <h1 className="t-title">Vendors</h1>
         <p className="text-muted mt-2">
           Add a vendor by its website. If you&rsquo;ve already filed with them, you&rsquo;ll see it right away.
         </p>
@@ -52,7 +52,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
       </section>
 
       {gaps.length > 0 ? (
-        <div className="mt-6 max-w-2xl border-l-2 border-oxblood bg-oxblood-wash/60 px-4 py-3 text-sm">
+        <div className="mt-6 max-w-2xl rounded-[var(--radius-md)] bg-alert-wash text-alert px-4 py-3 text-sm">
           Before you can file, finish your certificate details: {gaps.join(", ")}.{" "}
           <Link href="/settings" className="font-semibold underline underline-offset-4">
             Go to Settings
@@ -68,7 +68,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
                 key={key}
                 href={key === "all" ? "/" : `/?show=${key}`}
                 aria-current={filter === key ? "page" : undefined}
-                className={`pb-3 -mb-px border-b-2 ${filter === key ? "border-chip text-ink font-semibold" : "border-transparent text-muted hover:text-ink"}`}
+                className={`pb-3 -mb-px border-b-2 ${filter === key ? "border-forest text-ink font-semibold" : "border-transparent text-muted hover:text-ink"}`}
               >
                 {FILTERS[key].label} <span className="text-muted font-normal">{counts[key]}</span>
               </Link>
@@ -96,7 +96,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
               <li key={v.id}>
                 <Link href={`/vendors/${v.id}`} className="grid grid-cols-[1fr_auto] sm:grid-cols-[minmax(0,2fr)_10rem_9rem_8rem] items-center gap-x-6 gap-y-1 py-4 group">
                   <div className="min-w-0">
-                    <p className="font-display text-xl truncate group-hover:text-chip">{v.display_name || v.domain}</p>
+                    <p className="t-name truncate group-hover:text-forest">{v.display_name || v.domain}</p>
                     <p className="text-sm text-muted truncate">{v.domain}</p>
                   </div>
                   <div className="justify-self-end sm:justify-self-start">

@@ -71,7 +71,7 @@ export function ProfileForm({ profile }: { profile: BusinessProfile | null }) {
         <p className="hint">Optional. Added to every certificate email, like your ASID membership number.</p>
       </div>
       <div className="sm:col-span-6">
-        <SubmitButton pending="Saving">Save certificate details</SubmitButton>
+        <SubmitButton pending="Saving…">Save certificate details</SubmitButton>
         <FormMessage state={state} />
       </div>
     </form>
@@ -89,7 +89,9 @@ export function SignerForm({ signer, signatureUrl }: { signer: Signer | null; si
         <SignaturePad existingUrl={signatureUrl} />
       </div>
       <div className="sm:col-span-2">
-        <SubmitButton pending="Saving">Save signing details</SubmitButton>
+        <SubmitButton pending="Saving…" className="btn btn-quiet">
+          Save signing details
+        </SubmitButton>
         <FormMessage state={state} />
       </div>
     </form>
@@ -107,7 +109,7 @@ export function DocumentForm() {
         </label>
         <input id="file" name="file" type="file" accept="application/pdf,image/png,image/jpeg" className="field !py-1.5" />
       </div>
-      <SubmitButton pending="Uploading" className="btn btn-quiet">
+      <SubmitButton pending="Uploading…" className="btn btn-quiet">
         Add document
       </SubmitButton>
       <div className="sm:col-span-3">
@@ -122,7 +124,7 @@ export function InviteForm() {
   return (
     <form action={action} className="flex flex-wrap gap-2 items-end">
       <Input name="email" label="Add someone by email" type="email" className="grow" placeholder="name@yourstudio.com" />
-      <SubmitButton pending="Adding" className="btn btn-quiet">
+      <SubmitButton pending="Adding…" className="btn btn-quiet">
         Add to workspace
       </SubmitButton>
       <div className="w-full">

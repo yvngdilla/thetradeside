@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { sendMail, systemEmail } from "@/lib/mailer";
 import { APP_NAME } from "@/lib/brand";
+import { redirect } from "next/navigation";
+import { isDemo } from "@/lib/demo/store";
 
 export type LoginState = { error?: string; sentTo?: string } | undefined;
 
@@ -14,6 +16,7 @@ export type LoginState = { error?: string; sentTo?: string } | undefined;
  */
 export async function sendMagicLink(_: LoginState, fd: FormData): Promise<LoginState> {
   const email = String(fd.get("email") ?? "").trim().toLowerCase();
+  if (isDemo()) redirect("/");
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { error: "Enter your email address." };
 
   const admin = createAdminClient();

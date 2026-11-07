@@ -3,9 +3,13 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { env } from "@/lib/env";
+import { demoClient, isDemo } from "@/lib/demo/store";
+
+type UserClient = ReturnType<typeof createServerClient>;
 
 /** Supabase client acting as the signed-in user (RLS applies). */
-export async function createUserClient() {
+export async function createUserClient(): Promise<UserClient> {
+  if (isDemo()) return demoClient() as unknown as UserClient;
   const cookieStore = await cookies();
   return createServerClient(env.supabaseUrl(), env.supabasePublishableKey(), {
     cookies: {
@@ -25,6 +29,7 @@ export async function createUserClient() {
 
 /** Service-role client. Bypasses RLS, so callers must check workspace membership first. */
 export function createAdminClient() {
+  if (isDemo()) return demoClient() as unknown as ReturnType<typeof createClient>;
   return createClient(env.supabaseUrl(), env.supabaseSecretKey(), {
     auth: { persistSession: false, autoRefreshToken: false },
   });

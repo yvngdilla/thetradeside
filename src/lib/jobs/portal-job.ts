@@ -7,6 +7,7 @@ import { structured } from "@/lib/llm";
 import { createAdminClient } from "@/lib/supabase/server";
 import { addStep, buildCertificate, loadDocuments, loadFilingContext } from "@/lib/filing";
 import type { OpenItem } from "@/lib/types";
+import { isDemo } from "@/lib/demo/store";
 
 // Opens the vendor's trade application in a cloud browser, fills in what it can
 // from the workspace profile, attaches the certificate, and stops. It never
@@ -42,6 +43,7 @@ export async function runPortalJob(filingId: string, userId: string) {
   const admin = createAdminClient();
   const { data: filing } = await admin.from("filings").select("*").eq("id", filingId).single();
   if (!filing) return;
+  if (isDemo()) return runDemoPortal(filing as { id: string; team_id: string; vendor_id: string }, userId);
 
   let browser: Awaited<ReturnType<typeof browserbase.launch>> | null = null;
   try {
@@ -177,4 +179,37 @@ export async function releaseBrowser(sessionId: string | null) {
   await new Browserbase({ apiKey: env.browserbaseApiKey() }).sessions
     .update(sessionId, { projectId: env.browserbaseProjectId(), status: "REQUEST_RELEASE" })
     .catch(() => {});
+}
+
+/** Demo mode: walks through the same steps without opening a browser. */
+async function runDemoPortal(filing: { id: string; team_id: string; vendor_id: string }, userId: string) {
+  const admin = createAdminClient();
+  const pause = () => new Promise((r) => setTimeout(r, 1200));
+  const ctx = await loadFilingContext(filing.team_id, userId, filing.vendor_id);
+  const cert = await buildCertificate(ctx, filing.id);
+  await admin.from("filings").update({ certificate_path: cert.path, status: "portal_running" }).eq("id", filing.id);
+  await addStep(filing.id, "Signed certificate prepared");
+  for (const step of [
+    `Opened ${ctx.vendor.application_url || `https://${ctx.vendor.domain}`}`,
+    'Filled "Company name"',
+    'Filled "Contact name"',
+    'Filled "Email"',
+    'Filled "Phone"',
+    'Filled "Resale or seller\'s permit number"',
+    'Attached the certificate to "Resale certificate"',
+  ]) {
+    await pause();
+    await addStep(filing.id, step);
+  }
+  await admin
+    .from("filings")
+    .update({
+      status: "awaiting_review",
+      open_items: [
+        { label: "W-9", reason: "They ask for a W-9. Add one in Settings, or upload it yourself in the form." },
+        { label: "Verification check", reason: "Complete the 'I'm not a robot' check yourself." },
+      ],
+    })
+    .eq("id", filing.id);
+  await addStep(filing.id, "Ready for your review. Nothing has been submitted. (Demo mode: no browser was opened.)");
 }

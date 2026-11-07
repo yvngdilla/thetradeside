@@ -20,7 +20,7 @@ export default async function WelcomePage() {
   return (
     <main className="min-h-dvh flex items-center justify-center px-6">
       <div className="w-full max-w-md">
-        <h1 className="font-display text-4xl">Set up your workspace</h1>
+        <h1 className="t-title">Set up your <em>workspace</em></h1>
         <p className="text-muted mt-3">
           Your workspace holds your firm&rsquo;s certificate details and vendor list. You can invite your team once it&rsquo;s set up.
         </p>
