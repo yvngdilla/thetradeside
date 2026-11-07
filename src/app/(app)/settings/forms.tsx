@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, useTransition } from "react";
 import {
   deleteDocument,
   inviteMember,
@@ -15,6 +15,7 @@ import {
 import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES } from "@/lib/documents";
 import { FormMessage, SubmitButton } from "@/components/ui";
 import { SignaturePad } from "@/components/signature-pad";
+import { DropZone } from "@/components/drop-zone";
 import type { BusinessProfile, Signer } from "@/lib/types";
 
 function Input({
@@ -104,7 +105,6 @@ export function ProfileForm({ profile }: { profile: BusinessProfile | null }) {
  * check and save. Nothing is saved until they press Save.
  */
 function CertificateImport({ formRef }: { formRef: React.RefObject<HTMLFormElement | null> }) {
-  const fileRef = useRef<HTMLInputElement>(null);
   const [state, action, pending] = useActionState<ImportState, FormData>(async (prev, fd) => {
     const file = fd.get("certificate");
     if (file instanceof File && file.size > 0 && file.type !== "application/pdf") {
@@ -118,7 +118,6 @@ function CertificateImport({ formRef }: { formRef: React.RefObject<HTMLFormEleme
   }, undefined);
 
   useEffect(() => {
-    if (fileRef.current) fileRef.current.value = "";
     const form = formRef.current;
     if (!form || !state?.details) return;
     const details: Record<string, string> = { ...state.details };
@@ -134,33 +133,20 @@ function CertificateImport({ formRef }: { formRef: React.RefObject<HTMLFormEleme
   }, [state, formRef]);
 
   return (
-    <form action={action} className="mb-6 rounded-md border border-rule bg-paper p-4 flex flex-wrap items-center gap-x-4 gap-y-3">
-      <div className="grow basis-64">
-        <p className="font-semibold">Have a certificate you&rsquo;ve filed before?</p>
-        <p className="text-sm text-muted">
-          Upload it as a PDF or a photo and we&rsquo;ll fill in the details below for you to check. The file isn&rsquo;t kept.
-        </p>
-      </div>
-      <label className={`btn btn-quiet has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest ${pending ? "opacity-55 cursor-progress" : ""}`}>
-        {pending ? "Reading certificate…" : "Upload a past certificate"}
-        <input
-          ref={fileRef}
-          type="file"
-          name="certificate"
-          accept="application/pdf,image/*"
-          className="sr-only"
-          disabled={pending}
-          onChange={(e) => {
-            if (e.currentTarget.files?.length) e.currentTarget.form?.requestSubmit();
-          }}
-        />
-      </label>
-      {state?.error || state?.ok ? (
-        <div className="w-full">
-          <FormMessage state={state} />
-        </div>
-      ) : null}
-    </form>
+    <div className="mb-6">
+      <DropZone
+        title="Drop a certificate you’ve filed before"
+        hint="PDF or a photo. We’ll fill in the details below for you to check before saving. The file isn’t kept."
+        accept="application/pdf,image/*"
+        busy={pending ? "Reading certificate…" : null}
+        onFiles={([file]) => {
+          const fd = new FormData();
+          fd.set("certificate", file);
+          startTransition(() => action(fd));
+        }}
+      />
+      <FormMessage state={state} />
+    </div>
   );
 }
 
@@ -295,15 +281,12 @@ function DocumentRow({ doc }: { doc: DocumentItem }) {
 
 /** Drop files, or click to browse. Each file uploads straight away, named from its file name. */
 function DocumentDropzone() {
-  const input = useRef<HTMLInputElement>(null);
-  const [over, setOver] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [results, setResults] = useState<{ error?: string; ok?: string }[]>([]);
 
-  async function add(files: FileList) {
-    const list = Array.from(files);
+  async function add(files: File[]) {
     const out: { error?: string; ok?: string }[] = [];
-    for (const file of list) {
+    for (const file of files) {
       if (!DOCUMENT_TYPES.includes(file.type)) {
         out.push({ error: `${file.name} isn't a PDF, PNG or JPG.` });
         continue;
@@ -323,53 +306,18 @@ function DocumentDropzone() {
     }
     setUploading(null);
     setResults(out.filter((r) => r.error || r.ok));
-    if (input.current) input.current.value = "";
   }
 
   return (
     <div>
-      <label
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (!uploading) setOver(true);
-        }}
-        onDragLeave={() => setOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setOver(false);
-          if (!uploading && e.dataTransfer.files.length) add(e.dataTransfer.files);
-        }}
-        className={`flex flex-col items-center gap-1 rounded-md border border-dashed px-6 py-8 text-center transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest ${
-          over ? "border-forest bg-forest-wash" : "border-control bg-paper hover:border-forest"
-        } ${uploading ? "cursor-progress" : "cursor-pointer"}`}
-      >
-        <input
-          ref={input}
-          type="file"
-          multiple
-          accept={DOCUMENT_TYPES.join(",")}
-          className="sr-only"
-          disabled={Boolean(uploading)}
-          onChange={(e) => {
-            if (e.currentTarget.files?.length) add(e.currentTarget.files);
-          }}
-        />
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none mb-1 h-6 w-6 text-forest" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" />
-        </svg>
-        <span className="pointer-events-none font-semibold">
-          {uploading ? (
-            `Uploading ${uploading}…`
-          ) : (
-            <>
-              Drop files here or <span className="text-forest underline underline-offset-2">browse</span>
-            </>
-          )}
-        </span>
-        <span className="pointer-events-none text-sm text-muted">
-          PDF, PNG or JPG, up to 2.5 MB each. Each is named from its file name, and you can rename it.
-        </span>
-      </label>
+      <DropZone
+        title="Drop files here"
+        hint="PDF, PNG or JPG, up to 2.5 MB each. Each is named from its file name, and you can rename it."
+        accept={DOCUMENT_TYPES.join(",")}
+        multiple
+        busy={uploading ? `Uploading ${uploading}…` : null}
+        onFiles={add}
+      />
       {results.length ? (
         <ul className="mt-2 grid gap-1">
           {results.map((r, i) => (

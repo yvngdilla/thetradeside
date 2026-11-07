@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SIGNATURE_STYLES, type SignatureStyle } from "@/app/fonts/signature";
+import { DropZone } from "@/components/drop-zone";
 
 /** Pen colour for drawn and typed signatures. */
 const INK = "#1c2440";
@@ -98,9 +99,7 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
     setValue("");
   };
 
-  const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const onUpload = async (file: File) => {
     const img = new Image();
     img.src = URL.createObjectURL(file);
     await img.decode();
@@ -210,17 +209,17 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
               <p className="hint">This goes on your certificates the same as a signature you draw.</p>
             </div>
           ) : (
-            <label className="flex flex-col items-center gap-1 rounded-md border border-dashed border-control bg-paper px-6 py-6 text-center cursor-pointer hover:border-forest has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest">
-              <input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={onUpload} />
+            <DropZone
+              title={uploaded ? "Drop a different image" : "Drop an image of your signature"}
+              hint="PNG or JPG. Sign on plain white paper; the background is removed."
+              accept="image/png,image/jpeg"
+              onFiles={([file]) => onUpload(file)}
+            >
               {uploaded ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={uploaded} alt="Your uploaded signature" className="max-h-16 mb-1" />
-              ) : null}
-              <span className="font-semibold">
-                {uploaded ? "Choose a different image" : <>Choose an image of your signature</>}
-              </span>
-              <span className="text-sm text-muted">PNG or JPG. Sign on plain white paper; the background is removed.</span>
-            </label>
+                <img src={uploaded} alt="Your uploaded signature" className="pointer-events-none max-h-16 mb-1" />
+              ) : undefined}
+            </DropZone>
           )}
 
           {existingUrl ? (
