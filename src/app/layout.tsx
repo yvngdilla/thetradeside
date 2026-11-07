@@ -22,7 +22,7 @@ const sans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: { default: `The ${APP_NAME}`, template: `%s | ${APP_NAME}` },
+  title: { default: APP_NAME, template: `%s | ${APP_NAME}` },
   description: APP_TAGLINE,
 };
 

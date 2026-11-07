@@ -87,7 +87,7 @@ the same code, so a fix lands everywhere at once.
 
 ## Design system: "Signature"
 
-Source of truth: the "The Trade Side" design system artifact on claude.ai
+Source of truth: the Trade Side design system artifact on claude.ai
 (https://claude.ai/artifact/LePnsnAe4v4PgpJwbhAh19, `project/README.md` then
 `project/tokens.json`). Tokens live in `src/app/globals.css`.
 
@@ -105,6 +105,8 @@ Source of truth: the "The Trade Side" design system artifact on claude.ai
 
 ## Voice and email
 
+- The product is called **Trade Side**, never "The Trade Side", in UI, email
+  and copy. Use `APP_NAME` from `src/lib/brand.ts` in code.
 - Plain studio-manager tone, sentence case, no exclamation marks, no emoji,
   no em dashes. Tagline: "Resale certificates and trade accounts, filed once."
 - **Never greet someone with a stand-in word** ("Hi there", "Hi friend"). If

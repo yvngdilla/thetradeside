@@ -67,7 +67,7 @@ export function systemEmail(heading: string, paragraphs: string[], button?: { la
     ? `<p style="margin:22px 0"><a href="${button.url}" style="background:#1f3a2e;color:#f6efe9;text-decoration:none;padding:11px 18px;border-radius:999px;font-weight:600;display:inline-block">${escapeHtml(button.label)}</a></p>`
     : "";
   return `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1c1c1a;font-size:15px;line-height:1.55;max-width:520px">
-<p style="font-family:Georgia,serif;font-style:italic;font-size:22px;color:#1f3a2e;margin:0 0 18px;border-bottom:2px solid #d48a74;display:inline-block;padding-bottom:2px">The ${escapeHtml(APP_NAME)}</p>
+<p style="font-family:Georgia,serif;font-style:italic;font-size:22px;color:#1f3a2e;margin:0 0 18px;border-bottom:2px solid #d48a74;display:inline-block;padding-bottom:2px">${escapeHtml(APP_NAME)}</p>
 <h1 style="font-size:20px;margin:0 0 14px">${escapeHtml(heading)}</h1>${body}${cta}
 </div>`;
 }
