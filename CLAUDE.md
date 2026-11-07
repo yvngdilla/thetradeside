@@ -35,7 +35,8 @@ its accounts). If a task seems to need something from there, stop and ask.
   not a heads-up: sending email, invites, vendor submissions, production
   deploys, env var changes in Vercel.
 - The product's own filing rules are not negotiable:
-  - Certificates are signed only with a signature the signer drew or uploaded.
+  - Certificates are signed only with a signature the signer drew, typed or
+    uploaded themselves.
   - Email to a vendor goes out only when a designer presses Send.
   - Outlook integration only ever creates drafts. It never sends.
   - The online-form assistant never submits, never types passwords and never
@@ -87,7 +88,7 @@ the same code, so a fix lands everywhere at once.
 
 ## Design system: "Signature"
 
-Source of truth: the "The Trade Side" design system artifact on claude.ai
+Source of truth: the Trade Side design system artifact on claude.ai
 (https://claude.ai/artifact/LePnsnAe4v4PgpJwbhAh19, `project/README.md` then
 `project/tokens.json`). Tokens live in `src/app/globals.css`.
 
@@ -105,6 +106,8 @@ Source of truth: the "The Trade Side" design system artifact on claude.ai
 
 ## Voice and email
 
+- The product is called **Trade Side**, never "The Trade Side", in UI, email
+  and copy. Use `APP_NAME` from `src/lib/brand.ts` in code.
 - Plain studio-manager tone, sentence case, no exclamation marks, no emoji,
   no em dashes. Tagline: "Resale certificates and trade accounts, filed once."
 - **Never greet someone with a stand-in word** ("Hi there", "Hi friend"). If

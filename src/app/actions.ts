@@ -11,7 +11,8 @@ import { releaseBrowser, runPortalJob } from "@/lib/jobs/portal-job";
 import { buildCertificate, certificateEmail, loadDocuments, loadFilingContext, markEmailSent, paths, upload, addStep } from "@/lib/filing";
 import { createOutlookDraft, disconnectOutlook, findSentFiling } from "@/lib/outlook";
 import { sendMail, systemEmail } from "@/lib/mailer";
-import { env } from "@/lib/env";
+import { env, has } from "@/lib/env";
+import { IMPORT_MAX_BYTES, IMPORT_TYPES, readCertificateDetails, type ImportType, type ImportedDetails } from "@/lib/certificate-import";
 import { APP_NAME } from "@/lib/brand";
 import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES, documentLabelFromFileName } from "@/lib/documents";
 
@@ -286,6 +287,34 @@ export async function saveProfile(_: ActionState, fd: FormData): Promise<ActionS
   if (error) return { error: "Couldn't save business details." };
   revalidatePath("/settings");
   return { ok: "Business details saved" };
+}
+
+export type ImportState = { error?: string; ok?: string; details?: ImportedDetails; at?: number } | undefined;
+
+/** Reads a past certificate and returns its details for the designer to check. Nothing is saved or stored. */
+export async function readPastCertificate(_: ImportState, fd: FormData): Promise<ImportState> {
+  await getWorkspace();
+  if (!has("ANTHROPIC_API_KEY")) return { error: "Reading certificates isn't set up on this site yet. Fill the details in by hand." };
+  const file = fd.get("certificate");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose a certificate to upload." };
+  if (!IMPORT_TYPES.includes(file.type as ImportType)) return { error: "Upload a PDF or a photo (JPG or PNG) of the certificate." };
+  if (file.size > IMPORT_MAX_BYTES) return { error: "That file is over 2.5 MB. Upload a smaller PDF, or a photo of the page." };
+
+  let details: ImportedDetails | null;
+  try {
+    details = await readCertificateDetails({ bytes: new Uint8Array(await file.arrayBuffer()), type: file.type as ImportType });
+  } catch (err) {
+    console.error("[certificate-import] read failed:", err instanceof Error ? err.message : err);
+    return { error: "Couldn't read that file. Try a clearer scan or photo, or fill the details in by hand." };
+  }
+  if (!details) return { error: "That doesn't look like a resale certificate. Upload one you've filed with a vendor." };
+  const count = Object.keys(details).length;
+  if (!count) return { error: "Couldn't find any details on that certificate. Try a clearer scan or photo." };
+  return {
+    ok: `Filled in ${count} ${count === 1 ? "field" : "fields"} from ${file.name}. Check them, then save.`,
+    details,
+    at: Date.now(),
+  };
 }
 
 export async function saveSigner(_: ActionState, fd: FormData): Promise<ActionState> {

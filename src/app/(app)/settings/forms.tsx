@@ -1,7 +1,17 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
-import { deleteDocument, inviteMember, renameDocument, saveProfile, saveSigner, uploadDocument, type ActionState } from "@/app/actions";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import {
+  deleteDocument,
+  inviteMember,
+  readPastCertificate,
+  renameDocument,
+  saveProfile,
+  saveSigner,
+  uploadDocument,
+  type ActionState,
+  type ImportState,
+} from "@/app/actions";
 import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES } from "@/lib/documents";
 import { FormMessage, SubmitButton } from "@/components/ui";
 import { SignaturePad } from "@/components/signature-pad";
@@ -28,9 +38,17 @@ function Input({
 
 export function ProfileForm({ profile }: { profile: BusinessProfile | null }) {
   const [state, action] = useActionState<ActionState, FormData>(saveProfile, undefined);
+  const formRef = useRef<HTMLFormElement>(null);
   const p = profile;
   return (
-    <form action={action} className="grid gap-5 sm:grid-cols-6">
+    <>
+    <CertificateImport formRef={formRef} />
+    <form
+      ref={formRef}
+      action={action}
+      onSubmit={(e) => e.currentTarget.querySelectorAll(".is-imported").forEach((el) => el.classList.remove("is-imported"))}
+      className="grid gap-5 sm:grid-cols-6"
+    >
       <Input name="business_name" label="Firm name" defaultValue={p?.business_name} className="sm:col-span-3" required hint="Used in emails to vendors." />
       <Input name="seller_permit" label="Seller's permit number" defaultValue={p?.seller_permit} className="sm:col-span-3" required />
       <Input
@@ -76,7 +94,99 @@ export function ProfileForm({ profile }: { profile: BusinessProfile | null }) {
         <FormMessage state={state} />
       </div>
     </form>
+    </>
   );
+}
+
+/**
+ * Upload a certificate filed before (PDF or photo). Its details are read on the
+ * server and written into the certificate details form for the designer to
+ * check and save. Nothing is saved until they press Save.
+ */
+function CertificateImport({ formRef }: { formRef: React.RefObject<HTMLFormElement | null> }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [state, action, pending] = useActionState<ImportState, FormData>(async (prev, fd) => {
+    const file = fd.get("certificate");
+    if (file instanceof File && file.size > 0 && file.type !== "application/pdf") {
+      try {
+        fd.set("certificate", await prepareImage(file));
+      } catch {
+        return { error: "Couldn't open that image. Upload a JPG, PNG or PDF of the certificate." };
+      }
+    }
+    return readPastCertificate(prev, fd);
+  }, undefined);
+
+  useEffect(() => {
+    if (fileRef.current) fileRef.current.value = "";
+    const form = formRef.current;
+    if (!form || !state?.details) return;
+    const details: Record<string, string> = { ...state.details };
+    // A new street address without a suite shouldn't keep the old suite.
+    if (details.address_line1 && !details.address_line2) details.address_line2 = "";
+    for (const [name, value] of Object.entries(details)) {
+      const el = form.elements.namedItem(name);
+      if (!(el instanceof HTMLInputElement) || (!value && name !== "address_line2")) continue;
+      el.value = value;
+      el.classList.add("is-imported");
+      el.addEventListener("input", () => el.classList.remove("is-imported"), { once: true });
+    }
+  }, [state, formRef]);
+
+  return (
+    <form action={action} className="mb-6 rounded-md border border-rule bg-paper p-4 flex flex-wrap items-center gap-x-4 gap-y-3">
+      <div className="grow basis-64">
+        <p className="font-semibold">Have a certificate you&rsquo;ve filed before?</p>
+        <p className="text-sm text-muted">
+          Upload it as a PDF or a photo and we&rsquo;ll fill in the details below for you to check. The file isn&rsquo;t kept.
+        </p>
+      </div>
+      <label className={`btn btn-quiet has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest ${pending ? "opacity-55 cursor-progress" : ""}`}>
+        {pending ? "Reading certificate…" : "Upload a past certificate"}
+        <input
+          ref={fileRef}
+          type="file"
+          name="certificate"
+          accept="application/pdf,image/*"
+          className="sr-only"
+          disabled={pending}
+          onChange={(e) => {
+            if (e.currentTarget.files?.length) e.currentTarget.form?.requestSubmit();
+          }}
+        />
+      </label>
+      {state?.error || state?.ok ? (
+        <div className="w-full">
+          <FormMessage state={state} />
+        </div>
+      ) : null}
+    </form>
+  );
+}
+
+/** Resizes large photos and converts formats like HEIC to JPEG so they upload quickly and can be read. */
+async function prepareImage(file: File): Promise<File> {
+  const readable = ["image/png", "image/jpeg", "image/webp"].includes(file.type);
+  if (readable && file.size <= 1_500_000) return file;
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const scale = Math.min(1, 1800 / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    if (!blob) throw new Error("Image conversion failed");
+    return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.jpg`, { type: "image/jpeg" });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 export function SignerForm({ signer, signatureUrl }: { signer: Signer | null; signatureUrl: string | null }) {
