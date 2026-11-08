@@ -198,11 +198,12 @@ function Facts({ rows }: { rows: [string, React.ReactNode][] }) {
   const shown = rows.filter(([, v]) => v);
   if (!shown.length) return <p className="text-sm text-muted">Nothing yet. Use Edit to add their details.</p>;
   return (
-    <dl className="grid grid-cols-[8.5rem_1fr] gap-x-4 gap-y-2.5 text-[15px]">
+    <dl className="grid gap-y-3 sm:grid-cols-[8.5rem_1fr] sm:gap-x-4 sm:gap-y-2.5 text-[15px]">
       {shown.map(([k, v]) => (
-        <div key={k} className="contents">
-          <dt className="text-muted">{k}</dt>
-          <dd className="min-w-0 break-words">{v}</dd>
+        // On phones each pair stacks (label above value); from sm up the pair joins the two-column grid.
+        <div key={k} className="sm:contents">
+          <dt className="text-sm text-muted sm:text-[15px]">{k}</dt>
+          <dd className="min-w-0 [overflow-wrap:anywhere]">{v}</dd>
         </div>
       ))}
     </dl>

@@ -135,7 +135,7 @@ function CertificateImport({ formRef }: { formRef: React.RefObject<HTMLFormEleme
   return (
     <div className="mb-6">
       <DropZone
-        title="Drop a certificate you’ve filed before"
+        what="a certificate you’ve filed before"
         hint="PDF or a photo. We’ll fill in the details below for you to check before saving. The file isn’t kept."
         accept="application/pdf,image/*"
         busy={pending ? "Reading certificate…" : null}
@@ -311,7 +311,7 @@ function DocumentDropzone() {
   return (
     <div>
       <DropZone
-        title="Drop files here"
+        what="files"
         hint="PDF, PNG or JPG, up to 2.5 MB each. Each is named from its file name, and you can rename it."
         accept={DOCUMENT_TYPES.join(",")}
         multiple

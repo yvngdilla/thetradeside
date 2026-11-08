@@ -60,7 +60,7 @@ export default async function VendorPage(props: PageProps<"/vendors/[id]">) {
 
       <header className="mt-4">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <h1 className="t-title break-words min-w-0">{name}</h1>
+          <h1 className="t-title min-w-0 [overflow-wrap:anywhere]">{name}</h1>
           <StatusTag status={vendor.status} />
         </div>
         <p className="mt-1 text-muted">
@@ -117,9 +117,9 @@ export default async function VendorPage(props: PageProps<"/vendors/[id]">) {
           <Sheet title="History">
             <ol className="space-y-5">
               {filings.map((f) => (
-                <li key={f.id} className="grid grid-cols-[8.5rem_1fr] gap-x-4 text-[15px]">
-                  <p className="text-muted">{new Date(f.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}</p>
-                  <div className="min-w-0">
+                <li key={f.id} className="grid grid-cols-1 sm:grid-cols-[8.5rem_1fr] gap-x-4 gap-y-0.5 text-[15px]">
+                  <p className="text-sm text-muted sm:text-[15px]">{new Date(f.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}</p>
+                  <div className="min-w-0 [overflow-wrap:anywhere]">
                     <p>
                       <span className="font-semibold">{HISTORY_LABEL[f.status]}</span>
                       {f.sent_to ? <span className="text-muted">, to {f.sent_to}</span> : null}

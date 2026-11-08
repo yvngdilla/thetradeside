@@ -210,7 +210,7 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
             </div>
           ) : (
             <DropZone
-              title={uploaded ? "Drop a different image" : "Drop an image of your signature"}
+              what={uploaded ? "a different image" : "an image of your signature"}
               hint="PNG or JPG. Sign on plain white paper; the background is removed."
               accept="image/png,image/jpeg"
               onFiles={([file]) => onUpload(file)}

@@ -8,7 +8,7 @@ import { useRef, useState } from "react";
  * What happens with the files is up to the caller.
  */
 export function DropZone({
-  title,
+  what,
   hint,
   accept,
   multiple = false,
@@ -16,8 +16,8 @@ export function DropZone({
   onFiles,
   children,
 }: {
-  /** Main line, e.g. "Drop a past certificate here". A "browse" link is added after it. */
-  title: string;
+  /** What to add, e.g. "a certificate you've filed before". Reads "Drop … or browse", or "Choose …" on touch screens. */
+  what: string;
   hint: React.ReactNode;
   accept: string;
   multiple?: boolean;
@@ -79,7 +79,12 @@ export function DropZone({
       <span className="pointer-events-none font-semibold">
         {busy ?? (
           <>
-            {title} or <span className="text-forest underline underline-offset-2">browse</span>
+            <span className="pointer-coarse:hidden">
+              Drop {what} or <span className="text-forest underline underline-offset-2">browse</span>
+            </span>
+            <span className="hidden pointer-coarse:inline">
+              Choose <span className="text-forest underline underline-offset-2">{what}</span>
+            </span>
           </>
         )}
       </span>

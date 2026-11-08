@@ -38,7 +38,10 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
   return (
     <div className="max-w-[720px]">
       <h1 className="t-title">Settings</h1>
-      <nav aria-label="Settings sections" className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted">
+      <nav
+        aria-label="Settings sections"
+        className="mt-4 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-x-5 overflow-x-auto whitespace-nowrap text-sm text-muted [scrollbar-width:none] sm:flex-wrap"
+      >
         <a href="#business" className="hover:text-ink">Certificate details</a>
         <a href="#signature" className="hover:text-ink">Signature</a>
         <a href="#documents" className="hover:text-ink">Documents</a>
