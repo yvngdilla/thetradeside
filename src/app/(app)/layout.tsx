@@ -3,6 +3,7 @@ import { getWorkspace } from "@/lib/workspace";
 import { signOut } from "@/app/actions";
 import { Wordmark } from "@/components/wordmark";
 import { NavLink } from "./nav-link";
+import { SuggestFooter } from "./suggest-footer";
 import { isDemo } from "@/lib/demo/store";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       <main className="mx-auto max-w-[960px] px-4 sm:px-8 py-8 sm:py-10">{children}</main>
+      <SuggestFooter />
     </div>
   );
 }
