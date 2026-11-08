@@ -16,6 +16,7 @@ import { IMPORT_MAX_BYTES, IMPORT_TYPES, readCertificateDetails, type ImportType
 import { APP_NAME } from "@/lib/brand";
 import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES, documentLabelFromFileName } from "@/lib/documents";
 import { VENDOR_EMAIL_LIMITS } from "@/lib/vendor-email";
+import { FEATURE_REQUEST_LIMITS } from "@/lib/feature-requests";
 
 export type ActionState = { error?: string; ok?: string; vendorId?: string } | undefined;
 
@@ -436,3 +437,55 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+/** Saves a feature suggestion for the workspace and emails it to Colston when FEEDBACK_EMAIL is set. */
+export async function suggestFeature(_: ActionState, fd: FormData): Promise<ActionState> {
+  const ws = await getWorkspace();
+  const task = str(fd, "task");
+  const currentProcess = str(fd, "current_process");
+  const mayContact = fd.get("may_contact") === "on";
+  if (!task) return { error: "Tell us about the task you'd like handled." };
+  if (task.length > FEATURE_REQUEST_LIMITS.task || currentProcess.length > FEATURE_REQUEST_LIMITS.currentProcess) {
+    return { error: "That's a lot to take in. Keep each answer under 2,000 characters." };
+  }
+
+  const supabase = await createUserClient();
+  const { error } = await supabase.from("feature_requests").insert({
+    team_id: ws.teamId,
+    user_id: ws.userId,
+    email: ws.email,
+    task,
+    current_process: currentProcess,
+    may_contact: mayContact,
+  });
+  if (error) {
+    console.error("[feature-request] save failed:", error.message);
+    return { error: "Couldn't send your suggestion. Try again in a moment." };
+  }
+
+  const to = env.feedbackEmail();
+  if (to) {
+    const paragraphs = [
+      `${ws.email} at ${ws.teamName} suggested:`,
+      task,
+      currentProcess ? `How they handle it today: ${currentProcess}` : "",
+      mayContact ? "Reply to this email to reach them." : "They'd rather not be contacted about it.",
+    ].filter(Boolean);
+    try {
+      await sendMail({
+        to,
+        subject: `Feature suggestion from ${ws.teamName}`,
+        html: systemEmail("New feature suggestion", paragraphs),
+        text: paragraphs.join("\n\n"),
+        replyTo: mayContact ? ws.email : undefined,
+      });
+    } catch (err) {
+      // It's saved either way; the email is only a heads-up.
+      console.error("[feature-request] notify failed:", err instanceof Error ? err.message : err);
+    }
+  }
+
+  revalidatePath("/suggest");
+  return { ok: "Thanks. It's on our list, and you'll see its status here as it moves." };
+}
+

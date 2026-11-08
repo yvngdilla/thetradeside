@@ -36,6 +36,8 @@ export const env = {
   // Email (sign-in links, invites, certificates) is sent through Resend from this domain.
   resendApiKey: () => required("RESEND_API_KEY"),
   emailDomain: () => process.env.EMAIL_DOMAIN ?? "thetradeside.com",
+  // Where new feature suggestions are emailed. Optional: they're saved either way.
+  feedbackEmail: () => process.env.FEEDBACK_EMAIL || null,
 
   // Who may create a new workspace. "open" (default) lets any firm sign up;
   // "invite" only lets in invited emails and BOOTSTRAP_OWNER_EMAILS.
