@@ -15,14 +15,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           Demo mode: sample firm and vendors. Nothing is saved for long, and no emails are sent.
         </p>
       ) : null}
-      <header className="border-b border-rule bg-paper/95 backdrop-blur sticky top-0 z-10">
-        <div className="mx-auto max-w-[960px] px-4 sm:px-8 h-16 flex items-center gap-3 sm:gap-6">
+      <header className="border-b border-rule bg-paper/95 backdrop-blur sm:sticky sm:top-0 z-10">
+        {/* Phones: logo and sign out on one row, the sections on a row below. From sm up: one row. */}
+        <div className="mx-auto max-w-[960px] px-4 sm:px-8 pt-3 pb-2 sm:py-0 sm:h-16 flex flex-wrap sm:flex-nowrap items-center gap-x-3 sm:gap-x-6 gap-y-2">
           <Link href="/" aria-label="Trade Side, vendors" className="shrink-0">
             <Wordmark className="h-6 sm:h-7 w-auto" />
           </Link>
-          <nav className="flex gap-1 text-sm">
+          <nav aria-label="Main" className="order-last sm:order-none w-full sm:w-auto -mx-3 sm:mx-0 flex gap-1 text-sm">
             <NavLink href="/">Vendors</NavLink>
             <NavLink href="/settings">Settings</NavLink>
+            <NavLink href="/suggest">Suggest a feature</NavLink>
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm">
             <span className="text-muted hidden sm:inline">{ws.teamName}</span>
