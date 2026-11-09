@@ -3,8 +3,9 @@
 import { useActionState } from "react";
 import { sendMagicLink, type LoginState } from "./actions";
 import { SubmitButton } from "@/components/ui";
+import { Turnstile } from "@/components/turnstile";
 
-export function LoginForm() {
+export function LoginForm({ turnstileSiteKey }: { turnstileSiteKey: string | null }) {
   const [state, action] = useActionState<LoginState, FormData>(sendMagicLink, undefined);
 
   if (state?.sentTo) {
@@ -24,8 +25,9 @@ export function LoginForm() {
         <label htmlFor="email" className="label">
           Work email
         </label>
-        <input id="email" name="email" type="email" autoComplete="email" required className="field" placeholder="you@yourstudio.com" />
+        <input id="email" name="email" type="email" autoComplete="email" required className="field" placeholder="you@yourstudio.com" defaultValue={state?.email} />
       </div>
+      {turnstileSiteKey ? <Turnstile siteKey={turnstileSiteKey} resetKey={state?.attempt} /> : null}
       <SubmitButton pending="Sending link…">Email me a sign-in link</SubmitButton>
       {state?.error ? <p className="text-sm text-alert">{state.error}</p> : null}
     </form>
