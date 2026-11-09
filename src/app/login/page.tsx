@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { LoginForm } from "./login-form";
 import { Wordmark } from "@/components/wordmark";
 import { APP_TAGLINE } from "@/lib/brand";
+import { env } from "@/lib/env";
+import { turnstileEnabled } from "@/lib/turnstile";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -29,7 +31,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
             We&rsquo;ll email you a link, no password needed. New here? Use the same form to set up your firm.
           </p>
           {error ? <p className="mt-4 text-sm text-alert">That link expired or was already used. Send a new one.</p> : null}
-          <LoginForm />
+          <LoginForm turnstileSiteKey={turnstileEnabled() ? env.turnstileSiteKey() : null} />
         </div>
       </section>
     </main>

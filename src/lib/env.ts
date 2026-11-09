@@ -42,6 +42,11 @@ export const env = {
   // Who may create a new workspace. "open" (default) lets any firm sign up;
   // "invite" only lets in invited emails and BOOTSTRAP_OWNER_EMAILS.
   signupMode: (): "open" | "invite" => (process.env.SIGNUP_MODE === "invite" ? "invite" : "open"),
+  // Cloudflare Turnstile check on the sign-in form. Optional: the check is on
+  // only when both keys are set. The site key is public; the secret is server-only.
+  turnstileSiteKey: () => process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || null,
+  turnstileSecretKey: () => process.env.TURNSTILE_SECRET_KEY || null,
+
   bootstrapOwnerEmails: () =>
     (process.env.BOOTSTRAP_OWNER_EMAILS ?? "")
       .split(",")

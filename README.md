@@ -76,6 +76,8 @@ Copy `.env.example` to `.env.local` for local work, and set the same variables i
 
 Signup is open by default: anyone can create a workspace for their firm. Set `SIGNUP_MODE=invite` to limit sign-in to invited emails plus `BOOTSTRAP_OWNER_EMAILS`.
 
+The sign-in form is the one form anyone can submit, so it carries a Cloudflare Turnstile check that stops scripts from requesting sign-in links for addresses that never asked. Create a Turnstile widget for `thetradeside.com` in the Cloudflare dashboard, then set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`. The check is off until both are set.
+
 ### 6. Run
 
 ```bash
