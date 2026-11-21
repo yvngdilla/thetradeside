@@ -8,6 +8,13 @@ Tools for interior designers working with vendors to the trade. The first tool f
 4. It files it: an email to the vendor sent from Trade Side under the firm's name (replies go to the designer, who gets a copy), an optional draft in the designer's own Outlook, or a cloud browser that fills the vendor's online application and stops for them to review and submit.
 5. The vendor list shows who you've filed with, when, and how, so nothing gets filed twice.
 
+The second tool keeps one record per product a firm is specifying:
+
+1. Paste the link to a product page.
+2. The app reads the name, maker, SKU, dimensions, material, finish, lead time, photos and price.
+3. It applies the firm's discount and markup with that vendor, and passes freight through at cost.
+4. The item page gives one description block to paste into a proposal, and shows whether a certificate is on file with the seller.
+
 Workspaces are multi-tenant and self-serve: any firm signs up, creates its workspace and invites its team. Each firm has its own members, certificate details, documents and vendor list.
 
 ## Stack
@@ -26,11 +33,15 @@ Workspaces are multi-tenant and self-serve: any firm signs up, creates its works
 | --- | --- |
 | `supabase/migrations/0001_init.sql` | Schema, RLS policies, storage bucket |
 | `forms/` + `src/lib/forms/` | Official state PDFs and the registry that fills them. Add a state here. |
+| `supabase/migrations/0003_items.sql` | Projects, items and each vendor's discount and markup |
 | `src/lib/research.ts` | Vendor site crawl and extraction |
-| `src/lib/jobs/` | Background jobs: research and online-form filling |
+| `src/lib/clip.ts` + `src/lib/product-data.ts` | Reads one product page into an item. `product-data.ts` is the exact part (the page's own markup), with no network or model |
+| `src/lib/items.ts` | Item rules: how a price is worked out, what an item is missing, the proposal description |
+| `src/lib/firecrawl.ts` | The one Firecrawl client, shared by research and clipping |
+| `src/lib/jobs/` | Background jobs: research, item clipping and online-form filling |
 | `src/lib/outlook.ts` | Outlook connection, drafts, sent detection |
 | `src/app/actions.ts` | Server actions for the whole app |
-| `src/app/(app)/` | Signed-in pages: vendors, vendor detail, settings |
+| `src/app/(app)/` | Signed-in pages: vendors, vendor detail, items, item detail, settings |
 
 ## Setup
 

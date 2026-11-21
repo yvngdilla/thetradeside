@@ -7,6 +7,8 @@ import { createAdminClient, createUserClient } from "@/lib/supabase/server";
 import { getWorkspace } from "@/lib/workspace";
 import { normalizeDomain } from "@/lib/domain";
 import { runResearchJob } from "@/lib/jobs/research-job";
+import { runClipJob } from "@/lib/jobs/clip-job";
+import { ITEM_LIMITS, UNITS, statusFor } from "@/lib/items";
 import { releaseBrowser, runPortalJob } from "@/lib/jobs/portal-job";
 import { buildCertificate, certificateEmail, loadDocuments, loadFilingContext, markEmailSent, paths, upload, addStep } from "@/lib/filing";
 import { createOutlookDraft, disconnectOutlook, findSentFiling } from "@/lib/outlook";
@@ -18,9 +20,21 @@ import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES, documentLabelFromFileName } from "@
 import { VENDOR_EMAIL_LIMITS } from "@/lib/vendor-email";
 import { FEATURE_REQUEST_LIMITS } from "@/lib/feature-requests";
 
-export type ActionState = { error?: string; ok?: string; vendorId?: string } | undefined;
+export type ActionState = { error?: string; ok?: string; vendorId?: string; itemId?: string } | undefined;
 
 const str = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim();
+
+/** A typed amount ("$1,711.20", "25%") as a number, or null when blank or not a number. */
+function amount(fd: FormData, key: string): number | null {
+  const raw = str(fd, key).replace(/[$,%\s]/g, "");
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+}
+const percent = (fd: FormData, key: string, max: number) => {
+  const n = amount(fd, key);
+  return n == null ? null : Math.min(n, max);
+};
 
 // Vendors ----------------------------------------------------------------------
 
@@ -89,6 +103,8 @@ export async function updateVendor(_: ActionState, fd: FormData): Promise<Action
       rep_name: nullable("rep_name"),
       rep_email: nullable("rep_email"),
       notes: nullable("notes"),
+      trade_discount_pct: percent(fd, "trade_discount_pct", 100),
+      markup_pct: percent(fd, "markup_pct", 999),
       aliases,
     })
     .eq("id", id)
@@ -489,3 +505,150 @@ export async function suggestFeature(_: ActionState, fd: FormData): Promise<Acti
   return { ok: "Thanks. It's on our list, and you'll see its status here as it moves." };
 }
 
+
+// Items ------------------------------------------------------------------------
+
+/** Finds the project by name in this workspace, or creates it. Blank means no project. */
+async function projectIdFor(teamId: string, userId: string, name: string): Promise<string | null> {
+  const clean = name.trim().slice(0, 200);
+  if (!clean) return null;
+  const supabase = await createUserClient();
+  const { data: existing } = await supabase.from("projects").select("id").eq("team_id", teamId).ilike("name", clean.replace(/[%_]/g, "")).maybeSingle();
+  if (existing) return existing.id as string;
+  const { data: created } = await supabase.from("projects").insert({ team_id: teamId, name: clean, created_by: userId }).select("id").single();
+  return (created?.id as string) ?? null;
+}
+
+/** The vendor in this workspace that owns a domain (or lists it as an alias). */
+async function vendorForDomain(teamId: string, domain: string) {
+  const supabase = await createUserClient();
+  const { data } = await supabase
+    .from("vendors")
+    .select("id, trade_discount_pct, markup_pct")
+    .eq("team_id", teamId)
+    .or(`domain.eq.${domain},aliases.cs.{${domain}}`)
+    .maybeSingle();
+  return data as { id: string; trade_discount_pct: number | null; markup_pct: number | null } | null;
+}
+
+export async function addItem(_: ActionState, fd: FormData): Promise<ActionState> {
+  const ws = await getWorkspace();
+  const raw = str(fd, "url");
+  let url: URL;
+  try {
+    url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+  } catch {
+    return { error: "Paste the link to the product page." };
+  }
+  const domain = normalizeDomain(url.href);
+  if (!domain || raw.length > ITEM_LIMITS.url) return { error: "Paste the link to the product page." };
+  if (url.pathname === "/" && !url.search) return { error: "That's the vendor's home page. Open the product itself and paste that link." };
+
+  const [projectId, vendor] = await Promise.all([projectIdFor(ws.teamId, ws.userId, str(fd, "project")), vendorForDomain(ws.teamId, domain)]);
+
+  const supabase = await createUserClient();
+  const { data: item, error } = await supabase
+    .from("items")
+    .insert({
+      team_id: ws.teamId,
+      project_id: projectId,
+      vendor_id: vendor?.id ?? null,
+      source_url: url.href,
+      source_domain: domain,
+      discount_pct: vendor?.trade_discount_pct ?? null,
+      markup_pct: vendor?.markup_pct ?? null,
+      created_by: ws.userId,
+    })
+    .select("id")
+    .single();
+  if (error || !item) return { error: "Couldn't add that item. Try again." };
+
+  after(() => runClipJob(item.id));
+  revalidatePath("/items");
+  return { ok: `Reading the page on ${domain}`, itemId: item.id };
+}
+
+export async function reclipItem(itemId: string) {
+  const ws = await getWorkspace();
+  const supabase = await createUserClient();
+  const { data } = await supabase.from("items").update({ status: "clipping", clip_error: null }).eq("id", itemId).eq("team_id", ws.teamId).select("id");
+  if (data?.length) after(() => runClipJob(itemId));
+  revalidatePath(`/items/${itemId}`);
+}
+
+export async function updateItem(_: ActionState, fd: FormData): Promise<ActionState> {
+  const ws = await getWorkspace();
+  const id = str(fd, "id");
+  const short = (k: string) => str(fd, k).slice(0, ITEM_LIMITS.text) || null;
+  const long = (k: string) => str(fd, k).slice(0, ITEM_LIMITS.long) || null;
+  const name = str(fd, "name").slice(0, ITEM_LIMITS.text);
+  if (!name) return { error: "Give the item a name." };
+
+  const supabase = await createUserClient();
+  const { data: current } = await supabase.from("items").select("vendor_id, images, discount_pct, markup_pct").eq("id", id).eq("team_id", ws.teamId).maybeSingle();
+  if (!current) return { error: "That item is no longer here." };
+
+  // The seller can be any vendor in the workspace (a buying group, a showroom), not only the site it was clipped from.
+  const vendorId = str(fd, "vendor_id") || null;
+  type Terms = { trade_discount_pct: number | null; markup_pct: number | null };
+  let vendor: Terms | null = null;
+  if (vendorId) {
+    const { data } = await supabase.from("vendors").select("trade_discount_pct, markup_pct").eq("id", vendorId).eq("team_id", ws.teamId).maybeSingle();
+    if (!data) return { error: "Pick a vendor from your list." };
+    vendor = data as Terms;
+  }
+  const sellerChanged = vendorId !== (current.vendor_id ?? null);
+  // Changing who you buy from brings that vendor's terms with it, unless you changed the numbers yourself in the same save.
+  const terms = (typed: number | null, was: number | null, fromVendor: number | null | undefined) =>
+    sellerChanged && typed === (was ?? null) ? fromVendor ?? typed : typed;
+  const discount = terms(percent(fd, "discount_pct", 100), current.discount_pct as number | null, vendor?.trade_discount_pct);
+  const markup = terms(percent(fd, "markup_pct", 999), current.markup_pct as number | null, vendor?.markup_pct);
+
+  const image = str(fd, "image_url");
+  const unit = str(fd, "unit");
+  const retail = amount(fd, "retail_price");
+  const trade = amount(fd, "trade_price");
+
+  const { error } = await supabase
+    .from("items")
+    .update({
+      name,
+      maker: str(fd, "maker").slice(0, ITEM_LIMITS.text),
+      sku: short("sku"),
+      description: long("description"),
+      dimensions: short("dimensions"),
+      material: short("material"),
+      finish: short("finish"),
+      color: short("color"),
+      lead_time: short("lead_time"),
+      room: short("room"),
+      notes: long("notes"),
+      project_id: await projectIdFor(ws.teamId, ws.userId, str(fd, "project")),
+      vendor_id: vendorId,
+      quantity: amount(fd, "quantity") ?? 1,
+      unit: (UNITS as readonly string[]).includes(unit) ? unit : "each",
+      image_url: (current.images as string[]).includes(image) ? image : null,
+      retail_price: retail,
+      trade_price: trade,
+      discount_pct: discount,
+      markup_pct: markup,
+      freight: amount(fd, "freight"),
+      status: statusFor({ name, retail_price: retail, trade_price: trade }),
+      clip_error: null,
+    })
+    .eq("id", id)
+    .eq("team_id", ws.teamId);
+  if (error) return { error: "Couldn't save changes." };
+
+  revalidatePath(`/items/${id}`);
+  revalidatePath("/items");
+  return { ok: "Saved" };
+}
+
+export async function deleteItem(itemId: string) {
+  const ws = await getWorkspace();
+  const supabase = await createUserClient();
+  await supabase.from("items").delete().eq("id", itemId).eq("team_id", ws.teamId);
+  revalidatePath("/items");
+  redirect("/items");
+}

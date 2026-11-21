@@ -60,6 +60,10 @@ export interface Vendor {
   rep_name: string | null;
   rep_email: string | null;
   notes: string | null;
+  /** Percent off retail this firm gets from the vendor. Applied to every item bought from them. */
+  trade_discount_pct: number | null;
+  /** Percent the firm adds on top of its cost for items from this vendor. */
+  markup_pct: number | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -108,6 +112,52 @@ export interface TeamDocument {
   file_name: string;
   mime_type: string;
   size_bytes: number;
+}
+
+export type ItemStatus = "clipping" | "ready" | "needs_review" | "failed";
+
+export interface Project {
+  id: string;
+  team_id: string;
+  name: string;
+  created_at: string;
+}
+
+/** One product a firm is specifying. Clipped once, reused everywhere. */
+export interface Item {
+  id: string;
+  team_id: string;
+  project_id: string | null;
+  vendor_id: string | null;
+  status: ItemStatus;
+  source_url: string;
+  source_domain: string;
+  name: string;
+  maker: string;
+  sku: string | null;
+  description: string | null;
+  dimensions: string | null;
+  material: string | null;
+  finish: string | null;
+  color: string | null;
+  lead_time: string | null;
+  room: string | null;
+  quantity: number;
+  unit: string;
+  images: string[];
+  image_url: string | null;
+  currency: string;
+  retail_price: number | null;
+  trade_price: number | null;
+  discount_pct: number | null;
+  markup_pct: number | null;
+  freight: number | null;
+  price_note: string | null;
+  clip_error: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export function fullAddress(p: BusinessProfile): string {

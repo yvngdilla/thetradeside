@@ -4,7 +4,10 @@ import { useActionState, useState } from "react";
 import { rerunResearch, updateVendor, type ActionState } from "@/app/actions";
 import { FormMessage, SubmitButton } from "@/components/ui";
 import { METHOD_LABELS } from "@/components/status-tag";
+import { ExtLink, Facts, Field, Group, Sheet } from "@/components/sheet";
 import type { Vendor } from "@/lib/types";
+
+export { Sheet };
 
 /**
  * Everything we know about the vendor in one box. Reads as a short list of
@@ -85,6 +88,22 @@ export function VendorInfo({ vendor, defaultDescription }: { vendor: Vendor; def
               <Field name="display_name" label="Vendor name" defaultValue={vendor.display_name} />
               <Field name="account_status" label="Account status" defaultValue={vendor.account_status} placeholder="Approved, account #1234" />
               <Field name="discount_info" label="Trade pricing" defaultValue={vendor.discount_info} placeholder="20% off retail" />
+              <Field
+                name="trade_discount_pct"
+                label="Your discount, %"
+                inputMode="decimal"
+                defaultValue={vendor.trade_discount_pct}
+                placeholder="25"
+                hint="Off retail. Applied to every item you buy from them."
+              />
+              <Field
+                name="markup_pct"
+                label="Your markup, %"
+                inputMode="decimal"
+                defaultValue={vendor.markup_pct}
+                placeholder="25"
+                hint="Added on top of your cost for the client price."
+              />
               <Field name="aliases" label="Other websites" defaultValue={vendor.aliases.join(", ")} hint="So the same company isn't added twice." />
               <Field name="rep_name" label="Rep name" defaultValue={vendor.rep_name} />
               <Field name="rep_email" label="Rep email" type="email" defaultValue={vendor.rep_email} />
@@ -130,6 +149,8 @@ export function VendorInfo({ vendor, defaultDescription }: { vendor: Vendor; def
           ["Application", vendor.application_url ? <ExtLink href={vendor.application_url}>Open the application</ExtLink> : null],
           ["They ask for", vendor.required_documents.join(", ") || null],
           ["Trade pricing", vendor.discount_info],
+          ["Your discount", vendor.trade_discount_pct != null ? `${vendor.trade_discount_pct}% off retail` : null],
+          ["Your markup", vendor.markup_pct != null ? `${vendor.markup_pct}%` : null],
           ["Account", vendor.account_status],
           ["Rep", rep || null],
         ]}
@@ -170,76 +191,5 @@ export function VendorInfo({ vendor, defaultDescription }: { vendor: Vendor; def
         </form>
       </div>
     </Sheet>
-  );
-}
-
-export function Sheet({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <section className="sheet p-6">
-      <div className="flex items-center gap-4 mb-5">
-        <h2 className="t-name">{title}</h2>
-        {action ? <div className="ml-auto">{action}</div> : null}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Group({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <fieldset className="mb-7">
-      <legend className="text-sm font-semibold text-muted mb-3">{title}</legend>
-      {children}
-    </fieldset>
-  );
-}
-
-function Facts({ rows }: { rows: [string, React.ReactNode][] }) {
-  const shown = rows.filter(([, v]) => v);
-  if (!shown.length) return <p className="text-sm text-muted">Nothing yet. Use Edit to add their details.</p>;
-  return (
-    <dl className="grid gap-y-3 sm:grid-cols-[8.5rem_1fr] sm:gap-x-4 sm:gap-y-2.5 text-[15px]">
-      {shown.map(([k, v]) => (
-        // On phones each pair stacks (label above value); from sm up the pair joins the two-column grid.
-        <div key={k} className="sm:contents">
-          <dt className="text-sm text-muted sm:text-[15px]">{k}</dt>
-          <dd className="min-w-0 [overflow-wrap:anywhere]">{v}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-function ExtLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a href={href} target="_blank" rel="noreferrer" className="link">
-      {children}
-    </a>
-  );
-}
-
-function Field({
-  name,
-  label,
-  defaultValue,
-  type = "text",
-  hint,
-  placeholder,
-}: {
-  name: string;
-  label: string;
-  defaultValue: string | null;
-  type?: string;
-  hint?: string;
-  placeholder?: string;
-}) {
-  return (
-    <div>
-      <label htmlFor={name} className="label">
-        {label}
-      </label>
-      <input id={name} name={name} type={type} defaultValue={defaultValue ?? ""} placeholder={placeholder} className="field" />
-      {hint ? <p className="hint">{hint}</p> : null}
-    </div>
   );
 }

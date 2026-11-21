@@ -50,8 +50,15 @@ const DEFAULTS: Record<string, () => Row> = {
     id: uuid(), aliases: [], display_name: "", seller_name: "", status: "researching", method: "unknown",
     trade_email: null, trade_url: null, application_url: null, required_documents: [], property_description: null,
     discount_info: null, own_form_url: null, research_summary: null, research_confidence: null, research_sources: [],
-    research_error: null, account_status: null, rep_name: null, rep_email: null, notes: null, created_at: now(),
-    updated_at: now(), filed_at: null, filed_by: null,
+    research_error: null, account_status: null, rep_name: null, rep_email: null, notes: null, trade_discount_pct: null,
+    markup_pct: null, created_at: now(), updated_at: now(), filed_at: null, filed_by: null,
+  }),
+  projects: () => ({ id: uuid(), created_at: now() }),
+  items: () => ({
+    id: uuid(), project_id: null, vendor_id: null, status: "clipping", name: "", maker: "", sku: null, description: null,
+    dimensions: null, material: null, finish: null, color: null, lead_time: null, room: null, quantity: 1, unit: "each",
+    images: [], image_url: null, currency: "USD", retail_price: null, trade_price: null, discount_pct: null, markup_pct: null,
+    freight: null, price_note: null, clip_error: null, notes: null, created_at: now(), updated_at: now(),
   }),
   filings: () => ({
     id: uuid(), form_code: "CDTFA-230", status: "preparing", certificate_path: null, attached_document_ids: [],
