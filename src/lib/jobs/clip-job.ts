@@ -3,8 +3,17 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { clipItem, type ClipResult } from "@/lib/clip";
 import { statusFor } from "@/lib/items";
 import { isDemo } from "@/lib/demo/store";
+import { has } from "@/lib/env";
 
-/** Demo mode: a stand-in read, clearly labelled, so no paid lookup runs. */
+/**
+ * Demo mode reads the real page when both lookup keys are set, so page reading
+ * can be tried on real links without a database. Without them it stands in.
+ */
+function standIn(): boolean {
+  return isDemo() && !(has("ANTHROPIC_API_KEY") && has("FIRECRAWL_API_KEY"));
+}
+
+/** Demo mode without keys: a stand-in read, clearly labelled, so no paid lookup runs. */
 async function demoClip(url: string): Promise<ClipResult> {
   await new Promise((r) => setTimeout(r, 3000));
   const slug = new URL(url).pathname.split("/").filter(Boolean).pop() ?? "item";
@@ -36,7 +45,7 @@ export async function runClipJob(itemId: string) {
   if (!item) return;
 
   try {
-    const r = isDemo() ? await demoClip(item.source_url) : await clipItem({ url: item.source_url });
+    const r = standIn() ? await demoClip(item.source_url) : await clipItem({ url: item.source_url });
     await admin
       .from("items")
       .update({
