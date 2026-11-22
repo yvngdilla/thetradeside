@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { createUserClient } from "@/lib/supabase/server";
 import { getWorkspace } from "@/lib/workspace";
 import type { Item, Project, Vendor } from "@/lib/types";
-import { clientDescription, itemGaps, money, perUnit, priceItem, quantityLabel } from "@/lib/items";
+import { buyingRoute, clientDescription, itemGaps, money, perUnit, priceItem, quantityLabel, type BuyingRoute } from "@/lib/items";
 import { ItemStatusTag, StatusTag } from "@/components/status-tag";
 import { AutoRefresh } from "@/components/ui";
 import { Facts, Sheet } from "@/components/sheet";
@@ -36,7 +36,10 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
   const item = itemRow as Item;
   const vendors = (vendorRows ?? []) as Vendor[];
   const projects = (projectRows ?? []) as Project[];
-  const seller = vendors.find((v) => v.id === item.vendor_id) ?? null;
+  // Who else the firm has bought this maker's pieces from, so a buying group shows up as an option.
+  const { data: sameMaker } = await supabase.from("items").select("vendor_id").eq("team_id", ws.teamId).eq("source_domain", item.source_domain);
+  const route = buyingRoute(item, vendors, ((sameMaker ?? []) as { vendor_id: string | null }[]).map((r) => r.vendor_id));
+  const seller = route.seller;
   const project = projects.find((p) => p.id === item.project_id) ?? null;
   const price = priceItem(item);
   const gaps = itemGaps(item);
@@ -104,7 +107,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
               {seller ? (
                 <>
                   <Link href={`/vendors/${seller.id}`} className="link font-semibold">
-                    {seller.display_name || seller.domain}
+                    {vendorName(seller)}
                   </Link>
                   <StatusTag status={seller.status} />
                 </>
@@ -118,6 +121,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
                 </span>
               )}
             </div>
+            <BuyingNote route={route} item={item} />
           </Sheet>
 
           <ItemForm
@@ -159,6 +163,41 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
         </div>
       )}
     </div>
+  );
+}
+
+const vendorName = (v: Vendor) => v.display_name || v.domain;
+
+/** Says whether the item is bought direct or through someone else, and which way costs less. */
+function BuyingNote({ route, item }: { route: BuyingRoute<Vendor>; item: Item }) {
+  const { seller, maker, how, other, needsTerms } = route;
+  if (!seller) return null;
+  const makerName = maker ? vendorName(maker) : item.maker || item.source_domain;
+  const each = perUnit(item.unit);
+  const way = (v: Vendor) => (v.id === maker?.id ? `direct from ${vendorName(v)}` : `through ${vendorName(v)}`);
+  return (
+    <p className="mt-2 text-sm text-muted max-w-prose">
+      {how === "direct" ? "You buy this direct from the maker." : `You buy this through ${vendorName(seller)}, not direct from ${makerName}.`}{" "}
+      {other ? (
+        other.saving > 0 ? (
+          `That is ${money(other.saving, item.currency)} less ${each} than buying ${way(other.vendor)} (${money(other.costUnit, item.currency)}).`
+        ) : other.saving < 0 ? (
+          <span className="text-alert">
+            Buying {way(other.vendor)} would cost {money(other.costUnit, item.currency)} {each}, which is {money(-other.saving, item.currency)} less.
+          </span>
+        ) : (
+          `Buying ${way(other.vendor)} costs the same.`
+        )
+      ) : needsTerms ? (
+        <>
+          Add your discount with{" "}
+          <Link href={`/vendors/${needsTerms.id}`} className="link">
+            {vendorName(needsTerms)}
+          </Link>{" "}
+          to see which way costs less.
+        </>
+      ) : null}
+    </p>
   );
 }
 
