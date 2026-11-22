@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth/", "/api/cron/", "/api/outlook/callback"];
+// /api/clip answers the browser extension with data, so it says "signed out" itself instead of redirecting.
+const PUBLIC_PATHS = ["/login", "/auth/", "/api/cron/", "/api/outlook/callback", "/api/clip"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

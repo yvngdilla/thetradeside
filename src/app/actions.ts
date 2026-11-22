@@ -8,6 +8,7 @@ import { getWorkspace } from "@/lib/workspace";
 import { normalizeDomain } from "@/lib/domain";
 import { runResearchJob } from "@/lib/jobs/research-job";
 import { runClipJob } from "@/lib/jobs/clip-job";
+import { createItem, projectIdFor } from "@/lib/item-add";
 import { ITEM_LIMITS, UNITS, statusFor } from "@/lib/items";
 import { releaseBrowser, runPortalJob } from "@/lib/jobs/portal-job";
 import { buildCertificate, certificateEmail, loadDocuments, loadFilingContext, markEmailSent, paths, upload, addStep } from "@/lib/filing";
@@ -508,64 +509,14 @@ export async function suggestFeature(_: ActionState, fd: FormData): Promise<Acti
 
 // Items ------------------------------------------------------------------------
 
-/** Finds the project by name in this workspace, or creates it. Blank means no project. */
-async function projectIdFor(teamId: string, userId: string, name: string): Promise<string | null> {
-  const clean = name.trim().slice(0, 200);
-  if (!clean) return null;
-  const supabase = await createUserClient();
-  const { data: existing } = await supabase.from("projects").select("id").eq("team_id", teamId).ilike("name", clean.replace(/[%_]/g, "")).maybeSingle();
-  if (existing) return existing.id as string;
-  const { data: created } = await supabase.from("projects").insert({ team_id: teamId, name: clean, created_by: userId }).select("id").single();
-  return (created?.id as string) ?? null;
-}
-
-/** The vendor in this workspace that owns a domain (or lists it as an alias). */
-async function vendorForDomain(teamId: string, domain: string) {
-  const supabase = await createUserClient();
-  const { data } = await supabase
-    .from("vendors")
-    .select("id, trade_discount_pct, markup_pct")
-    .eq("team_id", teamId)
-    .or(`domain.eq.${domain},aliases.cs.{${domain}}`)
-    .maybeSingle();
-  return data as { id: string; trade_discount_pct: number | null; markup_pct: number | null } | null;
-}
-
 export async function addItem(_: ActionState, fd: FormData): Promise<ActionState> {
   const ws = await getWorkspace();
-  const raw = str(fd, "url");
-  let url: URL;
-  try {
-    url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
-  } catch {
-    return { error: "Paste the link to the product page." };
-  }
-  const domain = normalizeDomain(url.href);
-  if (!domain || raw.length > ITEM_LIMITS.url) return { error: "Paste the link to the product page." };
-  if (url.pathname === "/" && !url.search) return { error: "That's the vendor's home page. Open the product itself and paste that link." };
-
-  const [projectId, vendor] = await Promise.all([projectIdFor(ws.teamId, ws.userId, str(fd, "project")), vendorForDomain(ws.teamId, domain)]);
-
-  const supabase = await createUserClient();
-  const { data: item, error } = await supabase
-    .from("items")
-    .insert({
-      team_id: ws.teamId,
-      project_id: projectId,
-      vendor_id: vendor?.id ?? null,
-      source_url: url.href,
-      source_domain: domain,
-      discount_pct: vendor?.trade_discount_pct ?? null,
-      markup_pct: vendor?.markup_pct ?? null,
-      created_by: ws.userId,
-    })
-    .select("id")
-    .single();
-  if (error || !item) return { error: "Couldn't add that item. Try again." };
+  const item = await createItem(ws, { url: str(fd, "url"), project: str(fd, "project") });
+  if ("error" in item) return item;
 
   after(() => runClipJob(item.id));
   revalidatePath("/items");
-  return { ok: `Reading the page on ${domain}`, itemId: item.id };
+  return { ok: `Reading the page on ${item.domain}`, itemId: item.id };
 }
 
 export async function reclipItem(itemId: string) {

@@ -38,14 +38,21 @@ async function demoClip(url: string): Promise<ClipResult> {
   };
 }
 
+export interface ClipJobOptions {
+  /** Page source sent by the browser extension, read from the page the designer has open. Never stored. */
+  html?: string;
+  /** What to keep when the page turns out not to be a product page (a pin whose source is an article). */
+  fallback?: { name: string; image: string | null };
+}
+
 /** Reads the product page behind an item and stores what it finds. Safe to call from after(). */
-export async function runClipJob(itemId: string) {
+export async function runClipJob(itemId: string, opts: ClipJobOptions = {}) {
   const admin = createAdminClient();
   const { data: item } = await admin.from("items").select("id, source_url").eq("id", itemId).single();
   if (!item) return;
 
   try {
-    const r = standIn() ? await demoClip(item.source_url) : await clipItem({ url: item.source_url });
+    const r = standIn() ? await demoClip(item.source_url) : await clipItem({ url: item.source_url, html: opts.html });
     await admin
       .from("items")
       .update({
@@ -74,7 +81,11 @@ export async function runClipJob(itemId: string) {
   } catch (err) {
     await admin
       .from("items")
-      .update({ status: "failed", clip_error: err instanceof Error ? err.message : String(err) })
+      .update(
+        opts.fallback
+          ? { status: "needs_review", name: opts.fallback.name, images: opts.fallback.image ? [opts.fallback.image] : [], image_url: opts.fallback.image, clip_error: null }
+          : { status: "failed", clip_error: err instanceof Error ? err.message : String(err) },
+      )
       .eq("id", itemId)
       .eq("status", "clipping");
   }

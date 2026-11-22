@@ -1,0 +1,150 @@
+/* Tokens match src/app/globals.css ("Signature"). Light only. */
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("fonts/InstrumentSans-Variable.woff2") format("woff2");
+  font-weight: 400 700;
+}
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("fonts/InstrumentSerif-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("fonts/InstrumentSerif-Italic.woff2") format("woff2");
+  font-style: italic;
+}
+:root {
+  --paper: #f6efe9;
+  --sheet: #fffcf9;
+  --plaster: #f1e7df;
+  --rule: #e5d9cf;
+  --control: #928170;
+  --ink: #1c1c1a;
+  --muted: #6a5f57;
+  --forest: #1f3a2e;
+  --on-forest: #f6efe9;
+  --alert: #8a3a26;
+  --alert-wash: #f6dcd3;
+  color-scheme: light;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  width: 340px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 15px/24px "Instrument Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+main {
+  padding: 20px;
+}
+h1 {
+  margin: 0 0 12px;
+  font: 400 28px/32px "Instrument Serif", Georgia, serif;
+}
+p {
+  margin: 0 0 12px;
+}
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 18px;
+}
+.page {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.page p {
+  margin: 0;
+}
+.page-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.label {
+  display: block;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.field {
+  width: 100%;
+  background: var(--sheet);
+  border: 1px solid var(--control);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.field:focus {
+  border-color: var(--forest);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(31, 58, 46, 0.16);
+}
+.hint {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+  margin-top: -4px;
+}
+.btn {
+  border-radius: 999px;
+  padding: 11px 18px;
+  font: 600 14px/18px "Instrument Sans", system-ui, sans-serif;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+.btn:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+}
+.btn-primary {
+  background: var(--forest);
+  color: var(--on-forest);
+}
+.btn-quiet {
+  background: transparent;
+  border-color: var(--control);
+  color: var(--ink);
+}
+.error {
+  background: var(--alert-wash);
+  color: var(--alert);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 18px;
+  margin-top: 12px;
+}
+details {
+  margin-top: 16px;
+  border-top: 1px solid var(--rule);
+  padding-top: 12px;
+  font-size: 13px;
+}
+summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+details[open] summary {
+  margin-bottom: 12px;
+}
+[hidden] {
+  display: none !important;
+}

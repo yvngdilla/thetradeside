@@ -96,6 +96,25 @@ npm install
 npm run dev
 ```
 
+## Browser extension
+
+`extension/` is a small Chrome extension that adds the page a designer has open
+to Trade Side. It exists because a vendor's trade price only shows after
+sign-in, where the server can't read it. On a pin it follows the pin to the
+page it came from.
+
+To try it: open `chrome://extensions`, turn on Developer mode, press Load
+unpacked and pick the `extension` folder. It talks to www.thetradeside.com. To
+point it at a local or preview build, open Settings in its popup and enter that
+address (Chrome asks before allowing it).
+
+It posts the page address and a trimmed copy of the page source to
+`/api/clip`, using the designer's own Trade Side sign-in. It reads a tab only
+when clicked there. It never types into a page, presses a button, submits a
+form, fills a password or solves a verification check, and text boxes are
+removed from the copy before it is sent. The page source is read once and not
+stored.
+
 ## How filing stays safe
 
 - Certificates are signed only with the signature the signer drew, typed or uploaded themselves.
