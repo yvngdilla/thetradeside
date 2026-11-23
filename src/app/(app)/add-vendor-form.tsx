@@ -8,7 +8,7 @@ import { SubmitButton } from "@/components/ui";
 export function AddVendorForm() {
   const [state, action] = useActionState<ActionState, FormData>(addVendor, undefined);
   return (
-    <form action={action} className="mt-8 rounded-md border border-rule bg-sheet p-5">
+    <form action={action} className="relative sheet p-5 sm:p-6">
       <label htmlFor="domain" className="label">
         Add a vendor
       </label>
@@ -37,7 +37,7 @@ export function AddVendorForm() {
           ) : null}
         </p>
       ) : state?.ok ? (
-        <p className="text-sm mt-2 text-forest">
+        <p className="text-sm mt-2 text-good">
           {state.ok}. This takes about a minute.{" "}
           {state.vendorId ? (
             <Link href={`/vendors/${state.vendorId}`} className="underline underline-offset-4 font-semibold">

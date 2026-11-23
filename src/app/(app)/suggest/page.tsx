@@ -1,3 +1,5 @@
+import { Doodle } from "@/components/doodle";
+import { PaperShape } from "@/components/paper-shape";
 import type { Metadata } from "next";
 import { getWorkspace } from "@/lib/workspace";
 import { createUserClient } from "@/lib/supabase/server";
@@ -19,17 +21,20 @@ export default async function SuggestPage() {
 
   return (
     <div className="max-w-[720px]">
-      <h1 className="t-title">
-        What should we take <em>off your plate</em> next?
-      </h1>
+      <Doodle name="table" className="hidden xl:block absolute -right-36 top-8 h-36 w-36" />
+      <p className="t-hand -rotate-2 w-fit mb-2">we read every one</p>
+      <h1 className="t-title">What should we take off your plate next?</h1>
       <p className="mt-3 text-muted max-w-prose">
         Trade Side started with resale certificates, a chore every studio repeats with every vendor. Tell us about another one: a form, a
         follow-up, a spreadsheet you keep up by hand. We read every suggestion and build the ones that would save the most time.
       </p>
 
-      <section className="sheet p-5 sm:p-6 mt-8">
-        <SuggestForm />
-      </section>
+      <div className="relative mt-10">
+        <PaperShape tone="sage" cut={1} className="-inset-x-[5%] -inset-y-[8%]" />
+        <section className="relative sheet p-5 sm:p-6">
+          <SuggestForm />
+        </section>
+      </div>
 
       {requests.length ? (
         <section className="mt-12" aria-labelledby="suggested-title">
@@ -46,7 +51,7 @@ export default async function SuggestPage() {
                   </p>
                   <span
                     className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                      r.status === "shipped" ? "border-forest text-forest" : "border-rule text-muted"
+                      r.status === "shipped" ? "border-good text-good" : "border-rule text-muted"
                     }`}
                   >
                     {FEATURE_REQUEST_STATUS[r.status] ?? r.status}

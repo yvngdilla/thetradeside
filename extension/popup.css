@@ -1,28 +1,38 @@
-/* Tokens match src/app/globals.css ("Signature"). Light only. */
+/* Tokens match src/app/globals.css ("Studio"). Light only. */
 @font-face {
-  font-family: "Instrument Sans";
-  src: url("fonts/InstrumentSans-Variable.woff2") format("woff2");
+  font-family: "DM Sans";
+  src: url("fonts/DMSans-Variable.woff2") format("woff2");
+  font-weight: 100 1000;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("fonts/Fraunces-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+}
+@font-face {
+  font-family: "Caveat";
+  src: url("fonts/Caveat-Variable.woff2") format("woff2");
   font-weight: 400 700;
 }
 @font-face {
-  font-family: "Instrument Serif";
-  src: url("fonts/InstrumentSerif-Regular.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Instrument Serif";
-  src: url("fonts/InstrumentSerif-Italic.woff2") format("woff2");
-  font-style: italic;
+  font-family: "Trade Side Ampersand";
+  src: url("fonts/DMSans-Variable.woff2") format("woff2");
+  font-weight: 100 1000;
+  unicode-range: U+0026;
 }
 :root {
-  --paper: #f6efe9;
-  --sheet: #fffcf9;
-  --plaster: #f1e7df;
-  --rule: #e5d9cf;
-  --control: #928170;
-  --ink: #1c1c1a;
-  --muted: #6a5f57;
-  --forest: #1f3a2e;
-  --on-forest: #f6efe9;
+  --paper: #f3ecdf;
+  --sheet: #fffbf4;
+  --wash: #eadfcd;
+  --rule: #e6dccb;
+  --control: #9a8b78;
+  --ink: #2b2521;
+  --muted: #6b5f55;
+  --action: #2b2521;
+  --on-action: #fbf6ec;
+  --accent: #b4502c;
+  --terracotta: #d9805c;
+  --ochre: #e6b655;
   --alert: #8a3a26;
   --alert-wash: #f6dcd3;
   color-scheme: light;
@@ -35,15 +45,50 @@ body {
   width: 340px;
   background: var(--paper);
   color: var(--ink);
-  font: 15px/24px "Instrument Sans", system-ui, sans-serif;
+  font: 15px/24px "DM Sans", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 main {
   padding: 20px;
 }
+header {
+  position: relative;
+  margin-bottom: 14px;
+  padding-right: 64px;
+}
+.hand {
+  margin: 0 0 2px;
+  font: 600 20px/22px "Caveat", cursive;
+  color: var(--accent);
+  transform: rotate(-2deg);
+  transform-origin: left;
+}
 h1 {
-  margin: 0 0 12px;
-  font: 400 28px/32px "Instrument Serif", Georgia, serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: 400 26px/32px "Trade Side Ampersand", "Fraunces", Georgia, serif;
+  font-variation-settings: "SOFT" 100;
+  letter-spacing: -0.02em;
+}
+.dot {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: var(--terracotta);
+}
+.doodle {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  width: 64px;
+  height: 64px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 p {
   margin: 0 0 12px;
@@ -56,8 +101,8 @@ p {
 .page {
   background: var(--sheet);
   border: 1px solid var(--rule);
-  border-radius: 4px;
-  padding: 12px;
+  border-radius: 14px;
+  padding: 14px 16px;
   margin-bottom: 12px;
 }
 .page p {
@@ -82,16 +127,16 @@ p {
   width: 100%;
   background: var(--sheet);
   border: 1px solid var(--control);
-  border-radius: 4px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 11px 14px;
   font: inherit;
   color: var(--ink);
   margin-bottom: 12px;
 }
 .field:focus {
-  border-color: var(--forest);
+  border-color: var(--ink);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(31, 58, 46, 0.16);
+  box-shadow: 0 0 0 3px rgba(43, 37, 33, 0.14);
 }
 .hint {
   font-size: 13px;
@@ -101,33 +146,34 @@ p {
 }
 .btn {
   border-radius: 999px;
-  padding: 11px 18px;
-  font: 600 14px/18px "Instrument Sans", system-ui, sans-serif;
+  min-height: 44px;
+  padding: 11px 22px;
+  font: 600 14px/20px "DM Sans", system-ui, sans-serif;
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
 }
 .btn:disabled {
   opacity: 0.55;
   cursor: progress;
 }
 .btn:focus-visible {
-  outline: 2px solid var(--forest);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 .btn-primary {
-  background: var(--forest);
-  color: var(--on-forest);
+  background: var(--action);
+  color: var(--on-action);
 }
 .btn-quiet {
   background: transparent;
-  border-color: var(--control);
+  border-color: var(--ink);
   color: var(--ink);
 }
 .error {
   background: var(--alert-wash);
   color: var(--alert);
-  border-radius: 4px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 10px 14px;
   font-size: 13px;
   line-height: 18px;
   margin-top: 12px;

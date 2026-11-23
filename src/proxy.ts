@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // /api/clip answers the browser extension with data, so it says "signed out" itself instead of redirecting.
-const PUBLIC_PATHS = ["/login", "/auth/", "/api/cron/", "/api/outlook/callback", "/api/clip"];
+// /home is the public homepage. Signed-out visitors to "/" see it too, without the address changing.
+const PUBLIC_PATHS = ["/login", "/home", "/auth/", "/api/cron/", "/api/outlook/callback", "/api/clip"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -31,6 +32,7 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
+  if (!user && path === "/") return NextResponse.rewrite(new URL("/home", request.url));
   if (!user && !isPublic) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";

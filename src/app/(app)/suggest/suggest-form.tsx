@@ -42,7 +42,7 @@ export function SuggestForm() {
       <p className="hint">The tools, the steps and how often it comes up. Anything that helps us picture it.</p>
 
       <label className="mt-5 flex items-start gap-2.5 text-sm">
-        <input type="checkbox" name="may_contact" defaultChecked className="mt-0.5 accent-[var(--forest)]" />
+        <input type="checkbox" name="may_contact" defaultChecked className="mt-0.5 accent-[var(--ink)]" />
         <span>You can email me with questions about it</span>
       </label>
 

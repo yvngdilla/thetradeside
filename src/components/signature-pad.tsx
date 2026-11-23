@@ -148,7 +148,7 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
               <div className="relative">
                 <canvas
                   ref={canvas}
-                  className="block h-32 w-full bg-sheet border border-control rounded-md touch-none cursor-crosshair"
+                  className="block h-32 w-full bg-sheet border border-control rounded-[var(--radius-sm)] touch-none cursor-crosshair"
                   onPointerDown={start}
                   onPointerMove={move}
                   onPointerUp={end}
@@ -187,8 +187,8 @@ export function SignaturePad({ existingUrl }: { existingUrl: string | null }) {
                 {SIGNATURE_STYLES.map((style) => (
                   <label
                     key={style.id}
-                    className={`flex items-center gap-3 rounded-md border px-3 h-16 cursor-pointer bg-sheet has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest ${
-                      style.id === styleId ? "border-forest ring-1 ring-forest" : "border-rule hover:border-control"
+                    className={`flex items-center gap-3 rounded-[var(--radius-sm)] border px-3 h-16 cursor-pointer bg-sheet has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest ${
+                      style.id === styleId ? "border-ink ring-1 ring-ink" : "border-rule hover:border-control"
                     }`}
                   >
                     <input

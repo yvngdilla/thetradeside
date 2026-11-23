@@ -4,9 +4,9 @@
  * through the image optimizer's allow-list.
  */
 export function ItemPhoto({ src, alt = "", className = "" }: { src: string | null; alt?: string; className?: string }) {
-  if (!src) return <div aria-hidden className={`rounded-[var(--radius-sm)] bg-plaster ${className}`} />;
+  if (!src) return <div aria-hidden className={`rounded-[var(--radius-sm)] bg-wash ${className}`} />;
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} loading="lazy" referrerPolicy="no-referrer" className={`rounded-[var(--radius-sm)] bg-plaster object-cover ${className}`} />
+    <img src={src} alt={alt} loading="lazy" referrerPolicy="no-referrer" className={`rounded-[var(--radius-sm)] bg-wash object-cover ${className}`} />
   );
 }

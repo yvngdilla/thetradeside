@@ -321,7 +321,7 @@ function DocumentDropzone() {
       {results.length ? (
         <ul className="mt-2 grid gap-1">
           {results.map((r, i) => (
-            <li key={i} role="status" className={`text-sm ${r.error ? "text-alert" : "text-forest"}`}>
+            <li key={i} role="status" className={`text-sm ${r.error ? "text-alert" : "text-good"}`}>
               {r.error ?? r.ok}
             </li>
           ))}

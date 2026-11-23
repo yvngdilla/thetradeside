@@ -10,7 +10,7 @@ export function LoginForm({ turnstileSiteKey }: { turnstileSiteKey: string | nul
 
   if (state?.sentTo) {
     return (
-      <div className="mt-8 border-l-2 border-forest pl-4">
+      <div className="mt-8 sheet px-5 py-4">
         <p className="font-semibold">Check your email</p>
         <p className="text-muted mt-1">
           We sent a sign-in link to {state.sentTo}. It works once and expires in an hour.

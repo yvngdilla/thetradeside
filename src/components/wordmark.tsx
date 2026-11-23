@@ -1,17 +1,16 @@
-import { WORDMARK_SVG, WORDMARK_VIEWBOX } from "./wordmark-paths";
+import { APP_NAME } from "@/lib/brand";
 
 /**
- * Trade Side wordmark: Instrument Serif Italic in forest with one clay pen
- * stroke underneath. Inline so it follows the theme (forest turns sage in dark mode).
+ * Trade Side wordmark: the name in Fraunces beside a small cut-paper dot.
+ * Set the size with a text-size class; the dot follows it.
  */
-export function Wordmark({ className = "h-7 w-auto", tone = "forest" }: { className?: string; tone?: "forest" | "on-forest" }) {
+export function Wordmark({ className = "text-[23px]", dot = "terracotta" }: { className?: string; dot?: "terracotta" | "ink" }) {
   return (
-    <svg
-      viewBox={WORDMARK_VIEWBOX}
-      role="img"
-      aria-label="Trade Side"
-      className={`${className} ${tone === "forest" ? "text-forest" : "text-on-forest"}`}
-      dangerouslySetInnerHTML={{ __html: WORDMARK_SVG }}
-    />
+    <span className={`font-display inline-flex items-center gap-[0.4em] leading-none font-medium tracking-[-0.02em] text-ink ${className}`}>
+      <svg aria-hidden viewBox="0 0 100 100" className={`h-[0.95em] w-[0.95em] ${dot === "ink" ? "text-ink" : "text-terracotta"}`}>
+        <path d="M50 8 C 78 4, 96 28, 92 54 C 88 82, 62 98, 36 92 C 12 86, 2 60, 8 36 C 13 18, 30 10, 50 8 Z" fill="currentColor" />
+      </svg>
+      {APP_NAME}
+    </span>
   );
 }

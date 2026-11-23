@@ -49,8 +49,8 @@ export function DropZone({
         setOver(false);
         if (!busy) take(e.dataTransfer.files);
       }}
-      className={`flex flex-col items-center gap-1 rounded-md border border-dashed px-6 py-7 text-center transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest ${
-        over ? "border-forest bg-forest-wash" : "border-control bg-paper hover:border-forest"
+      className={`flex flex-col items-center gap-1 rounded-[var(--radius-md)] border border-dashed px-6 py-7 text-center transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-forest ${
+        over ? "border-accent bg-wash" : "border-control bg-paper hover:border-ink"
       } ${busy ? "cursor-progress" : "cursor-pointer"}`}
     >
       <input
@@ -66,7 +66,7 @@ export function DropZone({
         <svg
           viewBox="0 0 24 24"
           aria-hidden="true"
-          className="pointer-events-none mb-1 h-6 w-6 text-forest"
+          className="pointer-events-none mb-1 h-6 w-6 text-accent"
           fill="none"
           stroke="currentColor"
           strokeWidth="1.6"
@@ -80,10 +80,10 @@ export function DropZone({
         {busy ?? (
           <>
             <span className="pointer-coarse:hidden">
-              Drop {what} or <span className="text-forest underline underline-offset-2">browse</span>
+              Drop {what} or <span className="underline decoration-accent underline-offset-2">browse</span>
             </span>
             <span className="hidden pointer-coarse:inline">
-              Choose <span className="text-forest underline underline-offset-2">{what}</span>
+              Choose <span className="underline decoration-accent underline-offset-2">{what}</span>
             </span>
           </>
         )}

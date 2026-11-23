@@ -1,3 +1,5 @@
+import { Doodle } from "@/components/doodle";
+import { HandNote, PaperShape } from "@/components/paper-shape";
 import type { Metadata } from "next";
 import { BUCKET, createAdminClient, createUserClient } from "@/lib/supabase/server";
 import { getWorkspace, loadProfileAndSigner } from "@/lib/workspace";
@@ -56,9 +58,16 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
         <ProfileForm profile={profile} />
       </Section>
 
-      <Section id="signature" title="Your signature" intro="Only you can sign with your signature. Each person in the workspace adds their own.">
-        <SignerForm signer={signer} signatureUrl={signatureUrl} />
-      </Section>
+      <div className="relative mt-10 mb-10">
+        <PaperShape tone="blush" className="-inset-x-[5%] -inset-y-[8%]" />
+        <HandNote className="-right-44 top-32 rotate-3">
+          <Doodle name="pen" className="mx-auto mb-1 h-24 w-24" />
+          only you can sign
+        </HandNote>
+        <Section id="signature" title="Your signature" intro="Only you can sign with your signature. Each person in the workspace adds their own." flush>
+          <SignerForm signer={signer} signatureUrl={signatureUrl} />
+        </Section>
+      </div>
 
       <Section
         id="documents"
@@ -73,7 +82,7 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
         title="Email"
         intro="Certificates are sent from Trade Side under your firm's name. Replies come to your own inbox and you get a copy of each one. If you'd rather send from Outlook yourself, connect it here to get drafts instead."
       >
-        {outlookMsg ? <p className="mb-3 text-sm text-forest">{outlookMsg}</p> : null}
+        {outlookMsg ? <p className="mb-3 text-sm text-good">{outlookMsg}</p> : null}
         {!has("MICROSOFT_CLIENT_ID") ? (
           <p className="text-sm text-muted">Nothing to set up. Outlook drafts aren&rsquo;t available on this site yet.</p>
         ) : outlook ? (
@@ -117,9 +126,9 @@ export default async function SettingsPage(props: PageProps<"/settings">) {
   );
 }
 
-function Section({ id, title, intro, children }: { id: string; title: string; intro: string; children: React.ReactNode }) {
+function Section({ id, title, intro, children, flush }: { id: string; title: string; intro: string; children: React.ReactNode; flush?: boolean }) {
   return (
-    <section id={id} className="sheet p-6 mt-6 scroll-mt-24">
+    <section id={id} className={`relative sheet p-6 scroll-mt-24 ${flush ? "" : "mt-6"}`}>
       <h2 className="t-name">{title}</h2>
       <p className="text-muted mt-1 mb-6 max-w-prose text-sm">{intro}</p>
       {children}
