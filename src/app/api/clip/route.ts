@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
   const url = text(body.url, ITEM_LIMITS.url);
   const project = text(body.project, 200);
   const html = typeof body.html === "string" ? body.html.slice(0, MAX_HTML_CHARS) : "";
+  const selected = Array.isArray(body.selected) ? body.selected.map((v) => text(v, 120)).filter(Boolean).slice(0, 12) : [];
 
   // A pin: follow it to the page it came from. With no source, keep the pin's own title and photo.
   const pin = body.pin && typeof body.pin === "object" ? (body.pin as Record<string, unknown>) : null;
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
 
   const id = item.id;
   // A pin's source is read from the server. Any other page is read from the source the extension sent.
-  if (reads) after(() => runClipJob(id, pin ? { fallback: pinDetails ?? undefined } : { html: html || undefined }));
+  if (reads) after(() => runClipJob(id, pin ? { fallback: pinDetails ?? undefined } : { html: html || undefined, selected }));
   revalidatePath("/items");
   return NextResponse.json({ id, link: `${request.nextUrl.origin}/items/${id}`, reading: reads });
 }

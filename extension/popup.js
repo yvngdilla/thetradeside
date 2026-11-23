@@ -73,6 +73,35 @@ async function readPage(maxChars) {
     };
   }
 
+  // The size, finish or fabric chosen on the page, in the page's own words. A choice lives in the
+  // browser, not in the page source, so it is read here before the copy is made.
+  const selected = [];
+  const words = (el) => (el?.textContent || "").replace(/\s+/g, " ").trim();
+  let address = location.href;
+  for (const menu of document.querySelectorAll("select")) {
+    const option = menu.selectedOptions[0];
+    const label = words(option);
+    const name = `${menu.name} ${menu.id}`;
+    // Skip menus that aren't a choice about the product: quantity, an unopened menu, "none".
+    if (!option || !option.value || option.disabled || menu.options.length > 80) continue;
+    if (/qty|quantity/i.test(name) || /^\d+$/.test(label) || /^none$/i.test(option.value)) continue;
+    if (menu.selectedIndex === 0 && /^(select|choose|pick)\b/i.test(label)) continue;
+    selected.push(label);
+    // Shops built on Shopify keep the chosen option in a menu named "id" without putting it in
+    // the address. Adding it makes the saved link open on the same size or finish.
+    if (menu.name === "id" && /^\d{8,}$/.test(option.value)) {
+      const link = new URL(address);
+      link.searchParams.set("variant", option.value);
+      address = link.href;
+    }
+  }
+  for (const box of document.querySelectorAll('input[type="radio"]:checked')) {
+    selected.push(words(box.labels?.[0]) || box.getAttribute("aria-label") || box.value);
+  }
+  for (const el of document.querySelectorAll('[role="radio"][aria-checked="true"], [role="option"][aria-selected="true"], button[aria-pressed="true"]')) {
+    selected.push(el.getAttribute("aria-label") || words(el));
+  }
+
   const copy = document.documentElement.cloneNode(true);
   for (const node of copy.querySelectorAll("style, link, svg, canvas, video, audio, iframe, noscript, template, input, textarea")) node.remove();
   for (const script of copy.querySelectorAll("script")) {
@@ -88,7 +117,11 @@ async function readPage(maxChars) {
     img.removeAttribute("srcset");
     img.removeAttribute("style");
   }
-  return { url: location.href, html: `<!doctype html>${copy.outerHTML}`.slice(0, maxChars) };
+  return {
+    url: address,
+    html: `<!doctype html>${copy.outerHTML}`.slice(0, maxChars),
+    selected: [...new Set(selected.filter((t) => t && t.length < 120))].slice(0, 12),
+  };
 }
 
 async function call(path, options) {

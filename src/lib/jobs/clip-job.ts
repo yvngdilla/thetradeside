@@ -41,6 +41,8 @@ async function demoClip(url: string): Promise<ClipResult> {
 export interface ClipJobOptions {
   /** Page source sent by the browser extension, read from the page the designer has open. Never stored. */
   html?: string;
+  /** Options selected on that page (a size, a finish). */
+  selected?: string[];
   /** What to keep when the page turns out not to be a product page (a pin whose source is an article). */
   fallback?: { name: string; image: string | null };
 }
@@ -52,7 +54,7 @@ export async function runClipJob(itemId: string, opts: ClipJobOptions = {}) {
   if (!item) return;
 
   try {
-    const r = standIn() ? await demoClip(item.source_url) : await clipItem({ url: item.source_url, html: opts.html });
+    const r = standIn() ? await demoClip(item.source_url) : await clipItem({ url: item.source_url, html: opts.html, selected: opts.selected });
     await admin
       .from("items")
       .update({
