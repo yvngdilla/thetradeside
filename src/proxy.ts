@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // /api/clip answers the browser extension with data, so it says "signed out" itself instead of redirecting.
 // /home is the public homepage. Signed-out visitors to "/" see it too, without the address changing.
-const PUBLIC_PATHS = ["/login", "/home", "/auth/", "/api/cron/", "/api/outlook/callback", "/api/clip"];
+// robots.txt, sitemap.xml and llms.txt are read by crawlers, which are never signed in.
+const PUBLIC_PATHS = ["/login", "/home", "/auth/", "/api/cron/", "/api/outlook/callback", "/api/clip", "/robots.txt", "/sitemap.xml", "/llms.txt"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
