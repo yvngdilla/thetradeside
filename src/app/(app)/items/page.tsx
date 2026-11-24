@@ -66,9 +66,16 @@ export default async function ItemsPage() {
         ) : (
           groups.map((g) => (
             <div key={g.key}>
-              <h2 className="t-name border-b border-rule pb-3">
-                {g.name} <span className="font-sans text-sm text-muted tabular-nums">{g.items.length}</span>
-              </h2>
+              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-rule pb-3">
+                <h2 className="t-name">
+                  {g.name} <span className="font-sans text-sm text-muted tabular-nums">{g.items.length}</span>
+                </h2>
+                {g.key !== "none" ? (
+                  <Link href={`/items/project/${g.key}`} className="ml-auto text-sm font-semibold underline underline-offset-4 hover:text-accent">
+                    Client and contractor lists
+                  </Link>
+                ) : null}
+              </div>
               <ul className="divide-y divide-rule">
                 {g.items.map((i) => {
                   const price = priceItem(i);

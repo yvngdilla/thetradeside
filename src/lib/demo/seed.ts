@@ -239,7 +239,7 @@ export function seedDemo(
     },
   ];
 
-  tables.projects = [{ id: "p-hillcrest", team_id: DEMO_TEAM_ID, name: "Hillcrest residence", created_by: USER_ID, created_at: daysAgo(6) }];
+  tables.projects = [{ id: "p-hillcrest", team_id: DEMO_TEAM_ID, name: "Hillcrest residence", room_order: [], created_by: USER_ID, created_at: daysAgo(6) }];
 
   const item = {
     team_id: DEMO_TEAM_ID, project_id: "p-hillcrest", vendor_id: null, sku: null, description: null, dimensions: null,

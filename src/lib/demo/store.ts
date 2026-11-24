@@ -53,7 +53,7 @@ const DEFAULTS: Record<string, () => Row> = {
     research_error: null, account_status: null, rep_name: null, rep_email: null, notes: null, trade_discount_pct: null,
     markup_pct: null, created_at: now(), updated_at: now(), filed_at: null, filed_by: null,
   }),
-  projects: () => ({ id: uuid(), created_at: now() }),
+  projects: () => ({ id: uuid(), room_order: [], created_at: now() }),
   items: () => ({
     id: uuid(), project_id: null, vendor_id: null, status: "clipping", name: "", maker: "", sku: null, description: null,
     dimensions: null, material: null, finish: null, color: null, lead_time: null, room: null, quantity: 1, unit: "each",

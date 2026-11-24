@@ -120,6 +120,8 @@ export interface Project {
   id: string;
   team_id: string;
   name: string;
+  /** Rooms in the order the designer wants them on lists. Missing rooms follow in the order they were first used. */
+  room_order?: string[];
   created_at: string;
 }
 
