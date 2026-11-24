@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createUserClient } from "@/lib/supabase/server";
 import { getWorkspace } from "@/lib/workspace";
-import type { Item, Project } from "@/lib/types";
-import { money, priceItem } from "@/lib/items";
+import type { Item, Project, Vendor } from "@/lib/types";
+import { buyingRoute, money, priceItem } from "@/lib/items";
 import { ItemStatusTag } from "@/components/status-tag";
 import { AutoRefresh } from "@/components/ui";
 import { ItemPhoto } from "@/components/item-photo";
@@ -15,10 +15,12 @@ export const maxDuration = 300;
 export default async function ItemsPage() {
   const ws = await getWorkspace();
   const supabase = await createUserClient();
-  const [{ data: itemRows }, { data: projectRows }] = await Promise.all([
+  const [{ data: itemRows }, { data: projectRows }, { data: vendorRows }] = await Promise.all([
     supabase.from("items").select("*").eq("team_id", ws.teamId).order("created_at", { ascending: false }),
     supabase.from("projects").select("*").eq("team_id", ws.teamId).order("created_at", { ascending: false }),
+    supabase.from("vendors").select("id, domain, aliases, display_name, trade_discount_pct").eq("team_id", ws.teamId),
   ]);
+  const vendors = (vendorRows ?? []) as Pick<Vendor, "id" | "domain" | "aliases" | "display_name" | "trade_discount_pct">[];
   const items = (itemRows ?? []) as Item[];
   const projects = (projectRows ?? []) as Project[];
 
@@ -60,13 +62,15 @@ export default async function ItemsPage() {
               <ul className="divide-y divide-rule">
                 {g.items.map((i) => {
                   const price = priceItem(i);
+                  const route = buyingRoute(i, vendors);
+                  const from = route.how === "through" ? `through ${route.seller!.display_name || route.seller!.domain}` : i.source_domain;
                   return (
                     <li key={i.id}>
                       <Link href={`/items/${i.id}`} className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] sm:grid-cols-[3.5rem_minmax(0,1fr)_8rem_8rem] items-center gap-x-4 sm:gap-x-6 py-4 group">
                         <ItemPhoto src={i.image_url} className="h-14 w-14" />
                         <div className="min-w-0">
                           <p className="font-semibold truncate group-hover:text-forest">{i.name || (i.status === "clipping" ? "Reading the page" : "Untitled item")}</p>
-                          <p className="text-sm text-muted truncate">{[i.maker, i.room, i.source_domain].filter(Boolean).join(" · ")}</p>
+                          <p className="text-sm text-muted truncate">{[i.maker, i.room, from].filter(Boolean).join(" · ")}</p>
                         </div>
                         <p className="hidden sm:block text-sm text-right tabular-nums">{money(price.clientTotal, i.currency)}</p>
                         <div className="justify-self-end">

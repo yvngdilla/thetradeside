@@ -1,4 +1,4 @@
-import type { Item, ItemStatus } from "@/lib/types";
+import type { Item, ItemStatus, Vendor } from "@/lib/types";
 
 // The one place item rules live: how a price is worked out, what an item is
 // still missing, and the description a designer pastes into other tools.
@@ -54,6 +54,53 @@ export function priceItem(i: Priced): ItemPrice {
     clientSavingPct:
       clientUnit != null && i.retail_price ? Math.round((1 - clientUnit / i.retail_price) * 1000) / 10 : null,
   };
+}
+
+type Seller = Pick<Vendor, "id" | "domain" | "aliases" | "display_name" | "trade_discount_pct">;
+
+export interface BuyingRoute<V extends Seller> {
+  /** Who the firm buys it from. Null when that vendor isn't in the list yet. */
+  seller: V | null;
+  /** The vendor whose own site the item was clipped from, when it's in the list. */
+  maker: V | null;
+  /** Direct from the maker's site, through someone else (a buying group, a showroom), or not set. */
+  how: "direct" | "through" | "unlisted";
+  /**
+   * The other way to buy the same item, priced at retail less that vendor's
+   * discount. `saving` is what the firm keeps per unit by buying the way it
+   * does now: negative means the other way is cheaper.
+   */
+  other: { vendor: V; costUnit: number; saving: number } | null;
+  /** Another way to buy exists, but its discount isn't on file, so there's nothing to compare. */
+  needsTerms: V | null;
+}
+
+/**
+ * Whether an item is bought direct or through another seller, and which is
+ * cheaper when both sets of terms are known. `alsoSoldBy` is the vendor ids the
+ * firm has bought this maker's other items from, which is how a buying group
+ * shows up as an option on an item currently bought direct.
+ */
+export function buyingRoute<V extends Seller>(
+  item: Pick<Item, "vendor_id" | "source_domain"> & Priced,
+  vendors: V[],
+  alsoSoldBy: (string | null)[] = [],
+): BuyingRoute<V> {
+  const seller = vendors.find((v) => v.id === item.vendor_id) ?? null;
+  const maker = vendors.find((v) => v.domain === item.source_domain || v.aliases.includes(item.source_domain)) ?? null;
+  const how = !seller ? "unlisted" : seller.id === maker?.id ? "direct" : "through";
+
+  const others = vendors.filter((v) => v.id !== seller?.id && (v.id === maker?.id || alsoSoldBy.includes(v.id)));
+  const current = priceItem(item).costUnit;
+  let other: BuyingRoute<V>["other"] = null;
+  if (seller && current != null && item.retail_price != null) {
+    for (const vendor of others) {
+      if (vendor.trade_discount_pct == null) continue;
+      const costUnit = round(item.retail_price * (1 - vendor.trade_discount_pct / 100));
+      if (!other || costUnit < other.costUnit) other = { vendor, costUnit, saving: round(costUnit - current) };
+    }
+  }
+  return { seller, maker, how, other, needsTerms: seller && !other ? others[0] ?? null : null };
 }
 
 export function money(n: number | null, currency = "USD"): string {
