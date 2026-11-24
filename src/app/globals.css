@@ -310,3 +310,14 @@ a.link {
   text-decoration-color: var(--accent);
   text-underline-offset: 4px;
 }
+
+/* Printed lists (and lists saved as PDF): room for the page edge, and no page break through a piece. */
+@page {
+  margin: 14mm;
+}
+@media print {
+  html,
+  body {
+    background: white;
+  }
+}

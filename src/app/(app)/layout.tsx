@@ -11,11 +11,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-dvh overflow-x-clip">
       {isDemo() ? (
-        <p className="bg-good-wash text-ink text-sm text-center px-4 py-2">
+        <p className="bg-good-wash text-ink text-sm text-center px-4 py-2 print:hidden">
           Demo mode: sample firm and vendors. Nothing is saved for long, and no emails are sent.
         </p>
       ) : null}
-      <header className="border-b border-rule bg-paper/95 backdrop-blur sm:sticky sm:top-0 z-20">
+      <header className="border-b border-rule bg-paper/95 backdrop-blur sm:sticky sm:top-0 z-20 print:hidden">
         {/* Phones: logo and sign out on one row, the sections on a row below. From sm up: one row. */}
         <div className="mx-auto max-w-[960px] px-4 sm:px-8 pt-3 pb-2 sm:py-0 sm:h-16 flex flex-wrap sm:flex-nowrap items-center gap-x-3 sm:gap-x-6 gap-y-2">
           <Link href="/" aria-label="Trade Side, vendors" className="shrink-0">
@@ -35,8 +35,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </header>
-      <main className="relative mx-auto max-w-[960px] px-4 sm:px-8 py-8 sm:py-12">{children}</main>
-      <SuggestFooter />
+      <main className="relative mx-auto max-w-[960px] px-4 sm:px-8 py-8 sm:py-12 print:max-w-none print:p-0">{children}</main>
+      <div className="print:hidden">
+        <SuggestFooter />
+      </div>
     </div>
   );
 }

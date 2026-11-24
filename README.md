@@ -115,6 +115,29 @@ form, fills a password or solves a verification check, and text boxes are
 removed from the copy before it is sent. The page source is read once and not
 stored.
 
+## Project lists
+
+Each project has a page of lists at `/items/project/<id>`, reached from the
+project's heading on Items.
+
+- **Client list:** every piece with its photo beside its description, the
+  client's price and a total per room.
+- **Contractor list:** the same pieces with SKU and quantity and no prices. The
+  prices are left out on the server, not hidden on the page.
+- **Room order:** drag a room's heading, or use Move up and Move down. The
+  order is saved on the project (`projects.room_order`, migration
+  `0004_room_order.sql`) and used by both lists and the spreadsheet.
+- **Print or save as PDF** uses the browser's print window.
+- **Download spreadsheet** is a CSV from `/api/projects/<id>/csv`. Its first
+  eleven columns use the headers of Studio Designer's product import template
+  (product code, name, tags, manufacturer, price type, price, description,
+  product url, image, vendor, currency). Studio Designer imports these as
+  product templates and maps columns on upload; it has no import for a
+  project's items.
+
+The rules (room grouping, which items are listed, totals) are in
+`src/lib/items.ts`; the CSV is in `src/lib/item-export.ts`.
+
 ## How filing stays safe
 
 - Certificates are signed only with the signature the signer drew, typed or uploaded themselves.

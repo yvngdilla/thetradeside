@@ -139,12 +139,15 @@ export function statusFor(i: Pick<Item, "name" | "retail_price" | "trade_price">
   return i.name.trim() && (i.retail_price != null || i.trade_price != null) ? "ready" : "needs_review";
 }
 
-/**
- * The description a client reads: what it is, then the specs, one per line.
- * Written so it can be pasted into a proposal tool's description box as is.
- */
-export function clientDescription(i: Pick<Item, "name" | "maker" | "description" | "dimensions" | "material" | "finish" | "color" | "lead_time">): string {
-  const title = [i.maker.trim(), i.name.trim()].filter(Boolean).join(" ");
+type Described = Pick<Item, "name" | "maker" | "description" | "dimensions" | "material" | "finish" | "color" | "lead_time">;
+
+/** "Fernhill Wren Table Lamp": maker then name, the way a line on a list starts. */
+export function itemTitle(i: Pick<Item, "name" | "maker">): string {
+  return [i.maker.trim(), i.name.trim()].filter(Boolean).join(" ");
+}
+
+/** The specs worth showing beside an item, in a fixed order, skipping the empty ones. */
+export function itemSpecs(i: Omit<Described, "name" | "maker" | "description">): [string, string][] {
   const specs: [string, string | null][] = [
     ["Dimensions", i.dimensions],
     ["Material", i.material],
@@ -152,7 +155,50 @@ export function clientDescription(i: Pick<Item, "name" | "maker" | "description"
     ["Color", i.color],
     ["Lead time", i.lead_time],
   ];
-  return [title, i.description?.trim(), ...specs.filter(([, v]) => v?.trim()).map(([k, v]) => `${k}: ${v!.trim()}`)]
-    .filter(Boolean)
-    .join("\n");
+  return specs.filter(([, v]) => v?.trim()).map(([k, v]) => [k, v!.trim()]);
+}
+
+/**
+ * The description a client reads: what it is, then the specs, one per line.
+ * Written so it can be pasted into a proposal tool's description box as is.
+ */
+export function clientDescription(i: Described): string {
+  return [itemTitle(i), i.description?.trim(), ...itemSpecs(i).map(([k, v]) => `${k}: ${v}`)].filter(Boolean).join("\n");
+}
+
+/** Items still being read, or that couldn't be read, are left off every list that leaves the firm. */
+export function listable(i: Pick<Item, "status">): boolean {
+  return i.status === "ready" || i.status === "needs_review";
+}
+
+export interface RoomGroup<I> {
+  /** The room as typed on the item. Empty for items with no room yet. */
+  room: string;
+  items: I[];
+}
+
+/**
+ * A project's items by room. Rooms come in the order the designer dragged them
+ * into (`order`), then any room not placed yet in the order it was first used,
+ * with items that have no room last. Within a room, oldest first.
+ */
+export function byRoom<I extends Pick<Item, "room" | "created_at">>(items: I[], order: string[] = []): RoomGroup<I>[] {
+  const sorted = [...items].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const groups = new Map<string, I[]>();
+  for (const i of sorted) {
+    const room = i.room?.trim() ?? "";
+    groups.set(room, [...(groups.get(room) ?? []), i]);
+  }
+  const rank = (room: string) => {
+    const at = order.indexOf(room);
+    return at >= 0 ? at : room ? order.length : order.length + 1;
+  };
+  return [...groups.entries()].map(([room, list]) => ({ room, items: list })).sort((a, b) => rank(a.room) - rank(b.room));
+}
+
+/** Money added up per currency, so a list never adds dollars to euros. "$1,200.00" or "$1,200.00 + €300.00". */
+export function sumMoney(amounts: { amount: number | null; currency: string }[]): string {
+  const totals = new Map<string, number>();
+  for (const { amount, currency } of amounts) if (amount != null) totals.set(currency, round((totals.get(currency) ?? 0) + amount));
+  return [...totals.entries()].map(([currency, n]) => money(n, currency)).join(" + ");
 }

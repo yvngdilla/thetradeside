@@ -596,6 +596,19 @@ export async function updateItem(_: ActionState, fd: FormData): Promise<ActionSt
   return { ok: "Saved" };
 }
 
+/** Saves the order a project's rooms appear in on its lists. */
+export async function saveRoomOrder(projectId: string, rooms: string[]): Promise<ActionState> {
+  const ws = await getWorkspace();
+  if (!Array.isArray(rooms) || rooms.length > 200 || rooms.some((r) => typeof r !== "string" || r.length > ITEM_LIMITS.text)) {
+    return { error: "Couldn't save the room order." };
+  }
+  const supabase = await createUserClient();
+  const { data, error } = await supabase.from("projects").update({ room_order: [...new Set(rooms)] }).eq("id", projectId).eq("team_id", ws.teamId).select("id");
+  if (error || !data?.length) return { error: "Couldn't save the room order." };
+  revalidatePath(`/items/project/${projectId}`);
+  return { ok: "Saved" };
+}
+
 export async function deleteItem(itemId: string) {
   const ws = await getWorkspace();
   const supabase = await createUserClient();
