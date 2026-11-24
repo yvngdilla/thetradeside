@@ -1,26 +1,10 @@
 import "server-only";
 import { z } from "zod";
-import { env } from "@/lib/env";
+import { firecrawl, scrape } from "@/lib/firecrawl";
 import { structured } from "@/lib/llm";
 
 // Finds how a vendor wants resale certificates submitted. Crawls the vendor's
 // own site with Firecrawl, then has Claude read the relevant pages.
-
-const FIRECRAWL = "https://api.firecrawl.dev/v2";
-
-async function firecrawl<T>(endpoint: string, body: unknown, timeoutMs = 60000): Promise<T> {
-  const res = await fetch(`${FIRECRAWL}/${endpoint}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${env.firecrawlApiKey()}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  const json = (await res.json().catch(() => ({}))) as { success?: boolean; error?: string } & T;
-  if (!res.ok || json.success === false) {
-    throw new Error(`Firecrawl ${endpoint} failed (${res.status}): ${json.error ?? "no details"}`);
-  }
-  return json;
-}
 
 type MapLink = string | { url: string; title?: string; description?: string };
 
@@ -34,16 +18,6 @@ async function mapSite(domain: string, search?: string): Promise<{ url: string; 
   return (res.links ?? []).map((l) =>
     typeof l === "string" ? { url: l, title: "" } : { url: l.url, title: l.title ?? "" },
   );
-}
-
-async function scrape(url: string): Promise<{ url: string; markdown: string }> {
-  const res = await firecrawl<{ data?: { markdown?: string } }>("scrape", {
-    url,
-    formats: ["markdown"],
-    onlyMainContent: false,
-    timeout: 45000,
-  });
-  return { url, markdown: res.data?.markdown ?? "" };
 }
 
 // Words that tend to appear in the URL or title of a vendor's trade program pages.
@@ -115,9 +89,8 @@ export async function researchVendor(domain: string): Promise<ResearchResult> {
     .sort((a, b) => b.score - a.score);
 
   const toScrape = [`https://${domain}`, ...candidates.filter((c) => !/\.pdf$/i.test(c.url)).slice(0, 5).map((c) => c.url)];
-  const pages = (await Promise.allSettled(toScrape.map(scrape)))
-    .filter((r): r is PromiseFulfilledResult<{ url: string; markdown: string }> => r.status === "fulfilled")
-    .map((r) => r.value)
+  const pages = (await Promise.allSettled(toScrape.map((url) => scrape(url))))
+    .flatMap((r) => (r.status === "fulfilled" ? [r.value] : []))
     .filter((p) => p.markdown.trim().length > 0);
 
   if (pages.length === 0) throw new Error(`Couldn't read ${domain}. Check the domain, or add the details by hand.`);

@@ -1,4 +1,4 @@
-import type { VendorStatus } from "@/lib/types";
+import type { ItemStatus, VendorStatus } from "@/lib/types";
 
 const LABELS: Record<VendorStatus, { text: string; cls: string }> = {
   researching: { text: "Looking up", cls: "tag-research" },
@@ -11,6 +11,18 @@ const LABELS: Record<VendorStatus, { text: string; cls: string }> = {
 
 export function StatusTag({ status }: { status: VendorStatus }) {
   const { text, cls } = LABELS[status];
+  return <span className={`tag ${cls}`}>{text}</span>;
+}
+
+const ITEM_LABELS: Record<ItemStatus, { text: string; cls: string }> = {
+  clipping: { text: "Reading page", cls: "tag-research" },
+  ready: { text: "Clipped", cls: "tag-filed" },
+  needs_review: { text: "Check details", cls: "tag-review" },
+  failed: { text: "Couldn't read", cls: "tag-failed" },
+};
+
+export function ItemStatusTag({ status }: { status: ItemStatus }) {
+  const { text, cls } = ITEM_LABELS[status];
   return <span className={`tag ${cls}`}>{text}</span>;
 }
 

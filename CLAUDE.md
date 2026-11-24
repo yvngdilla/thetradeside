@@ -53,6 +53,7 @@ npm run dev          # localhost:3000
 npm run build        # production build (also type-checks)
 npm run lint         # ESLint
 npx tsx --conditions=react-server scripts/test-fill.mts signature.png out.pdf   # visual check of a filled certificate
+npx tsx --env-file=.env.local --conditions=react-server scripts/test-clip.mts <product links or a file of them>   # what the item reader gets from real pages (uses Firecrawl and Anthropic credits)
 ```
 
 Demo mode (`DEMO_MODE=1`, or the `demo` branch on Vercel preview) runs on

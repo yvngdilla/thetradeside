@@ -23,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </Link>
           <nav aria-label="Main" className="order-last sm:order-none w-full sm:w-auto -mx-3 sm:mx-0 flex gap-1 text-sm">
             <NavLink href="/">Vendors</NavLink>
+            <NavLink href="/items">Items</NavLink>
             <NavLink href="/settings">Settings</NavLink>
             <NavLink href="/suggest">Suggest a feature</NavLink>
           </nav>

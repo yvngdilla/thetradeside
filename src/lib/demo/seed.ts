@@ -64,7 +64,7 @@ export function seedDemo(
     team_id: DEMO_TEAM_ID, aliases: [], required_documents: [], property_description: null, discount_info: null,
     own_form_url: null, research_error: null, account_status: null, rep_name: null, rep_email: null, notes: null,
     created_by: USER_ID, filed_at: null, filed_by: null, trade_email: null, trade_url: null, application_url: null,
-    research_sources: [],
+    research_sources: [], trade_discount_pct: null, markup_pct: null,
   };
 
   tables.vendors = [
@@ -81,6 +81,8 @@ export function seedDemo(
       required_documents: ["California resale certificate", "Business card"],
       property_description: "Upholstered furniture",
       discount_info: "30% off retail for approved trade accounts",
+      trade_discount_pct: 30,
+      markup_pct: 25,
       research_summary:
         "Marlow & Pierce takes resale certificates by email at their trade desk. Send the certificate and they'll open a trade account within two business days.",
       research_confidence: "high",
@@ -213,6 +215,57 @@ export function seedDemo(
       created_at: daysAgo(46),
       updated_at: daysAgo(46),
       completed_at: daysAgo(46),
+    },
+  ];
+
+  tables.projects = [{ id: "p-hillcrest", team_id: DEMO_TEAM_ID, name: "Hillcrest residence", created_by: USER_ID, created_at: daysAgo(6) }];
+
+  const item = {
+    team_id: DEMO_TEAM_ID, project_id: "p-hillcrest", vendor_id: null, sku: null, description: null, dimensions: null,
+    material: null, finish: null, color: null, lead_time: null, room: null, quantity: 1, unit: "each", images: [],
+    image_url: null, currency: "USD", retail_price: null, trade_price: null, discount_pct: null, markup_pct: null,
+    freight: null, price_note: null, clip_error: null, notes: null, created_by: USER_ID,
+  };
+  tables.items = [
+    {
+      ...item,
+      id: "i-sofa",
+      vendor_id: "v-marlow",
+      status: "ready",
+      source_url: "https://marlowpierce.example/products/alder-sofa-96",
+      source_domain: "marlowpierce.example",
+      name: "Alder Sofa, 96 inch",
+      maker: "Marlow & Pierce",
+      sku: "MP-ALD-96",
+      description: "Bench-seat sofa with a kiln-dried hardwood frame and loose back cushions.",
+      dimensions: '96" W x 38" D x 32" H',
+      material: "Performance linen blend, down-wrapped foam",
+      color: "Oat",
+      lead_time: "10 to 12 weeks",
+      room: "Living room",
+      retail_price: 6400,
+      discount_pct: 30,
+      markup_pct: 25,
+      freight: 425,
+      created_at: daysAgo(3),
+      updated_at: daysAgo(3),
+    },
+    {
+      ...item,
+      id: "i-rug",
+      status: "needs_review",
+      source_url: "https://ateliersable.example/rugs/dune-handknotted",
+      source_domain: "ateliersable.example",
+      vendor_id: "v-sable",
+      name: "Dune Hand-Knotted Rug",
+      maker: "Atelier Sable",
+      description: "Hand-knotted wool rug with a low, dense pile.",
+      material: "100% wool",
+      color: "Sand",
+      room: "Primary bedroom",
+      price_note: "Price varies by size. Trade price shows after sign-in.",
+      created_at: daysAgo(1),
+      updated_at: daysAgo(1),
     },
   ];
 }
