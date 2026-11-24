@@ -19,6 +19,8 @@ export interface ProductData {
     /** Set when the page lists several options: how many, and the name of the one the other facts here describe. */
     option?: string;
     option_count?: number;
+    /** Every option on offer (sizes, finishes), when the page lists them and none is selected. */
+    options?: string[];
     price_low?: number;
     price_high?: number;
     availability?: string;
@@ -109,6 +111,52 @@ const list = (v: unknown): Json[] => (Array.isArray(v) ? (v as Json[]) : v && ty
 const offerPrice = (o: Json | undefined) =>
   o ? num(o.price) ?? num(o.lowPrice) ?? num((o.priceSpecification as Json | undefined)?.price) : undefined;
 
+interface ScriptVariant {
+  id: string;
+  sku?: string;
+  title?: string;
+}
+
+/**
+ * Options a shop lists in its scripts instead of its markup: a "variants" list
+ * of objects with an id, a SKU and a title. This is how Shopify stores describe
+ * sizes and finishes when the theme leaves out structured data.
+ */
+function scriptVariants(html: string): ScriptVariant[] {
+  let best: ScriptVariant[] = [];
+  const marker = /"variants"\s*:\s*\[/g;
+  for (let m = marker.exec(html); m; m = marker.exec(html)) {
+    const start = m.index + m[0].length - 1;
+    let depth = 0;
+    let inString = false;
+    let end = -1;
+    for (let i = start; i < html.length && i < start + 200000; i++) {
+      const c = html[i];
+      if (inString) {
+        if (c === "\\") i++;
+        else if (c === '"') inString = false;
+      } else if (c === '"') inString = true;
+      else if (c === "[" || c === "{") depth++;
+      else if ((c === "]" || c === "}") && --depth === 0) {
+        end = i;
+        break;
+      }
+    }
+    if (end < 0) continue;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(html.slice(start, end + 1));
+    } catch {
+      continue;
+    }
+    const found = list(parsed)
+      .map((v) => ({ id: text(v.id), sku: text(v.sku), title: text(v.public_title) ?? text(v.title) ?? text(v.name) }))
+      .filter((v) => v.id && (v.sku || v.title)) as ScriptVariant[];
+    if (found.length > best.length) best = found;
+  }
+  return best;
+}
+
 export function readProductData(html: string, pageUrl: string): ProductData {
   if (!html) return { product: null, images: [] };
   const nodes = jsonLdNodes(html);
@@ -157,6 +205,20 @@ export function readProductData(html: string, pageUrl: string): ProductData {
     color: text(node?.color),
     site: meta(html, "og:site_name"),
   };
+  // No options in the markup: fall back to the ones the shop lists in its scripts.
+  if (Math.max(variants.length, offers.length) <= 1) {
+    const inScripts = scriptVariants(html);
+    const chosen = inScripts.find((v) => picked.includes(v.id));
+    if (inScripts.length === 1) {
+      product.sku ??= inScripts[0].sku;
+    } else if (chosen) {
+      Object.assign(product, { sku: chosen.sku ?? product.sku, option: chosen.title, option_count: inScripts.length });
+    } else if (inScripts.length > 1) {
+      // Nothing in the link says which one. A short list is worth showing the reader; a long one is noise.
+      Object.assign(product, { option_count: inScripts.length, options: inScripts.length <= 30 ? inScripts.map((v) => v.title ?? v.sku ?? "").filter(Boolean) : undefined });
+    }
+  }
+
   const found = Object.fromEntries(Object.entries(product).filter(([, v]) => v !== undefined)) as NonNullable<ProductData["product"]>;
 
   const imgs = [...images(node?.image), ...images(variant?.image), ...(meta(html, "og:image") ? [meta(html, "og:image")!] : [])]

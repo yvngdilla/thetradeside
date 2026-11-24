@@ -13,15 +13,15 @@ export interface WorkspaceContext {
 }
 
 /**
- * Resolves the signed-in user and their workspace. Redirects to /login when
- * signed out and to /welcome when the user has no workspace yet.
+ * The signed-in user and their workspace, or why there isn't one. For callers
+ * that answer with data (the browser extension), where a redirect is no use.
  */
-export const getWorkspace = cache(async (): Promise<WorkspaceContext> => {
+export const findWorkspace = cache(async (): Promise<WorkspaceContext | "signed-out" | "no-workspace"> => {
   const supabase = await createUserClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user?.email) redirect("/login");
+  if (!user?.email) return "signed-out";
 
   const { data: membership } = await supabase
     .from("team_members")
@@ -31,7 +31,7 @@ export const getWorkspace = cache(async (): Promise<WorkspaceContext> => {
     .limit(1)
     .maybeSingle();
 
-  if (!membership) redirect("/welcome");
+  if (!membership) return "no-workspace";
 
   const team = membership.teams as unknown as { name: string } | null;
   return {
@@ -41,6 +41,17 @@ export const getWorkspace = cache(async (): Promise<WorkspaceContext> => {
     teamName: team?.name ?? "Workspace",
     role: membership.role as "owner" | "member",
   };
+});
+
+/**
+ * Resolves the signed-in user and their workspace. Redirects to /login when
+ * signed out and to /welcome when the user has no workspace yet.
+ */
+export const getWorkspace = cache(async (): Promise<WorkspaceContext> => {
+  const ws = await findWorkspace();
+  if (ws === "signed-out") redirect("/login");
+  if (ws === "no-workspace") redirect("/welcome");
+  return ws;
 });
 
 /** Links pending invites (matched by email) to this user. Safe to call repeatedly. */

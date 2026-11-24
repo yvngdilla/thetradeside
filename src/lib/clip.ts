@@ -60,6 +60,8 @@ export interface ClipInput {
   url: string;
   /** Page source, when the caller already has it (a browser extension reading the page the designer is signed in to). */
   html?: string;
+  /** Options the designer has selected on the open page (a size, a finish), as the page words them. */
+  selected?: string[];
 }
 
 /** Reads one product page. Throws when the page can't be read or isn't a product. */
@@ -85,9 +87,10 @@ export async function clipItem(input: ClipInput): Promise<ClipResult> {
 
   const result = await structured({
     system:
-      "You help interior designers record products they are specifying. Read one product page and return the details of the product, for the option currently selected on the page. Use only what the page shows. Never invent a price, a dimension, a SKU or a lead time: if the page does not show it, return null. Copy dimensions and lead times as written. The structured data block comes from the page's own markup and is exact: prefer it over the page text when they disagree about name, brand or SKU. Its price is what the shop charges today, which can be a sale price or the price of one piece: check it against the page text. Mention a sale only when the page shows both a regular price and a lower sale price. When the page offers options (size, finish, fabric) and none is selected, describe the option the structured data names, or else the first one listed, keep SKU, finish and price to that same option, and say so in price_note.",
+      "You help interior designers record products they are specifying. Read one product page and return the details of the product, for the option currently selected on the page. Use only what the page shows. Never invent a price, a dimension, a SKU or a lead time: if the page does not show it, return null. Copy dimensions and lead times as written. The structured data block comes from the page's own markup and is exact: prefer it over the page text when they disagree about name, brand or SKU. Its price is what the shop charges today, which can be a sale price or the price of one piece: check it against the page text. Mention a sale only when the page shows both a regular price and a lower sale price. Options (size, finish, fabric) are settled in this order. First, options the prompt says are selected on the page right now: that is the designer's choice, so describe it. Second, an option or SKU named in the structured data: treat it as selected and use its SKU, even when the page text still asks the visitor to choose. Third, when the structured data has an options list but names no option and no SKU, nothing is selected: leave SKU null, give dimensions only when every option is the same size, and list the options on offer in price_note. Otherwise describe the first option listed and say so in price_note. Keep SKU, finish, dimensions and price to the one option described. For a rug, or anything else sold by size, the selected size is its dimensions.",
     prompt: [
       `Page URL: ${input.url}`,
+      input.selected?.length ? `Options selected on the page right now: ${input.selected.join("; ")}` : "",
       `Structured data from the page markup:\n${JSON.stringify(data.product ?? {}, null, 1)}`,
       `Image candidates (address, then the page's caption for it when there is one):\n${candidates.map((c) => `- ${c.url}${c.alt ? ` | ${c.alt}` : ""}`).join("\n") || "none"}`,
       embedded ? `Product data from the page's scripts (raw, may be cut off):\n${embedded}` : "",

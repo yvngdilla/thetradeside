@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Trade Side</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Add to <em>Trade Side</em></h1>
+
+      <p id="status" class="muted" role="status">Checking your sign-in.</p>
+
+      <section id="signin" hidden>
+        <p>Sign in to Trade Side, then press the button again.</p>
+        <button id="open-signin" class="btn btn-primary" type="button">Sign in</button>
+      </section>
+
+      <form id="clip" hidden>
+        <div class="page">
+          <p id="page-title" class="page-title"></p>
+          <p id="page-site" class="muted"></p>
+        </div>
+        <p id="pin-note" class="muted" hidden>This is a pin. Trade Side will follow it to the page it came from.</p>
+        <label class="label" for="project">Project</label>
+        <input id="project" class="field" list="projects" autocomplete="off" placeholder="Client or job name" />
+        <datalist id="projects"></datalist>
+        <button id="add" class="btn btn-primary" type="submit">Add this page</button>
+      </form>
+
+      <section id="done" hidden>
+        <p id="done-text"></p>
+        <button id="open-item" class="btn btn-primary" type="button">Open the item</button>
+      </section>
+
+      <p id="error" class="error" role="alert" hidden></p>
+
+      <details id="settings">
+        <summary>Settings</summary>
+        <label class="label" for="server">Trade Side address</label>
+        <input id="server" class="field" inputmode="url" spellcheck="false" />
+        <p class="hint">Only change this if someone at Trade Side asked you to.</p>
+        <button id="save-server" class="btn btn-quiet" type="button">Save</button>
+      </details>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
