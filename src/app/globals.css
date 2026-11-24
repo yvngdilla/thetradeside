@@ -1,56 +1,68 @@
 @import "tailwindcss";
 
 /*
-  Trade Side, "Signature" direction. Source of truth: the design system
-  artifact (project/tokens.json). Signed, not stamped: forest is brand and
-  action, clay is only the pen stroke, alert means "this needs you".
+  Trade Side, "Studio" direction. Warm paper, brown-black ink, cut-paper
+  shapes and hand-drawn doodles. Ink is the action colour; accent (terracotta)
+  marks the active or key thing; alert means "this needs you". The shape
+  colours are for paper shapes and doodle fills only, never text.
 */
 :root {
-  --paper: #f6efe9;
-  --sheet: #fffcf9;
-  --plaster: #f1e7df;
-  --rule: #e5d9cf;
-  --control: #928170;
-  --travertine: #c9bcae;
-  --ink: #1c1c1a;
-  --muted: #6a5f57;
-  --forest: #1f3a2e;
-  --on-forest: #f6efe9;
-  --forest-wash: #e3ebe5;
-  --clay: #d48a74;
+  --paper: #f3ecdf;
+  --sheet: #fffbf4;
+  --wash: #eadfcd;
+  --rule: #e6dccb;
+  --control: #9a8b78;
+  --ink: #2b2521;
+  --muted: #6b5f55;
+  --action: #2b2521;
+  --on-action: #fbf6ec;
+  --accent: #b4502c;
+  --good: #55703f;
+  --good-wash: #dfe6d3;
   --alert: #8a3a26;
   --alert-wash: #f6dcd3;
-  --on-alert: #fffcf9;
-  --focus: var(--forest);
-  --shadow-field-focus: 0 0 0 3px rgba(31, 58, 46, 0.16);
-  --radius-sm: 2px;
-  --radius-md: 4px;
+  --on-alert: #fffbf4;
+  --terracotta: #d9805c;
+  --sage: #aebc9d;
+  --ochre: #e6b655;
+  --blush: #ecc3b0;
+  --sky: #bfd0d6;
+  --focus: var(--ink);
+  --shadow-field-focus: 0 0 0 3px rgba(43, 37, 33, 0.14);
+  --radius-sm: 10px;
+  --radius-md: 14px;
   --radius-pill: 999px;
   color-scheme: light;
 }
 
-/* Light only for now. The dark palette in the design system is parked until it's revisited. */
+/* Light only for now. Everything is styled through these tokens so a dark theme can come later. */
 
 @theme inline {
   --color-paper: var(--paper);
   --color-sheet: var(--sheet);
-  --color-plaster: var(--plaster);
+  --color-wash: var(--wash);
   --color-rule: var(--rule);
   --color-control: var(--control);
-  --color-travertine: var(--travertine);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
-  --color-forest: var(--forest);
-  --color-on-forest: var(--on-forest);
-  --color-forest-wash: var(--forest-wash);
-  --color-clay: var(--clay);
+  --color-action: var(--action);
+  --color-on-action: var(--on-action);
+  --color-accent: var(--accent);
+  --color-good: var(--good);
+  --color-good-wash: var(--good-wash);
   --color-alert: var(--alert);
   --color-alert-wash: var(--alert-wash);
   --color-on-alert: var(--on-alert);
-  --font-sans: var(--font-instrument-sans), system-ui, sans-serif;
-  --font-display: var(--font-instrument-serif), "Iowan Old Style", Georgia, serif;
-  --radius-sm: 2px;
-  --radius-md: 4px;
+  --color-terracotta: var(--terracotta);
+  --color-sage: var(--sage);
+  --color-ochre: var(--ochre);
+  --color-blush: var(--blush);
+  --color-sky: var(--sky);
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-display: var(--font-ampersand), var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-hand: var(--font-caveat), "Bradley Hand", cursive;
+  --radius-sm: 10px;
+  --radius-md: 14px;
 }
 
 html {
@@ -67,29 +79,33 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Instrument Serif is always weight 400; presence comes from size. */
-.font-display {
+/* Fraunces, always in its soft cut and at weight 400; presence comes from size. */
+.font-display,
+.t-title,
+.t-name {
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 100;
   font-weight: 400;
 }
 
 /* App type scale */
 .t-title {
-  font-family: var(--font-display);
-  font-size: 36px;
-  line-height: 40px;
-  font-weight: 400;
+  font-size: clamp(34px, 4vw, 46px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
 }
 .t-name {
-  font-family: var(--font-display);
-  font-size: 24px;
-  line-height: 28px;
-  font-weight: 400;
+  font-size: 23px;
+  line-height: 29px;
+  letter-spacing: -0.015em;
 }
-.t-signature {
-  font-family: var(--font-display);
-  font-style: italic;
+/* Handwritten notes: a label above a headline, an aside beside a form. Decorative, short, never an instruction. */
+.t-hand {
+  font-family: var(--font-hand);
+  font-weight: 600;
   font-size: 24px;
-  line-height: 30px;
+  line-height: 26px;
+  color: var(--accent);
 }
 
 :focus-visible {
@@ -112,8 +128,8 @@ body {
   width: 100%;
   background: var(--sheet);
   border: 1px solid var(--control);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
   font: inherit;
   color: var(--ink);
 }
@@ -121,13 +137,13 @@ body {
   color: var(--muted);
 }
 .field:focus {
-  border-color: var(--forest);
+  border-color: var(--ink);
   outline: none;
   box-shadow: var(--shadow-field-focus);
 }
 /* Filled in from an uploaded certificate, until the designer edits or saves it. */
 .field.is-imported {
-  background: var(--forest-wash);
+  background: var(--good-wash);
 }
 .field[aria-invalid="true"] {
   border-color: var(--alert);
@@ -156,10 +172,11 @@ textarea.field {
   align-items: center;
   gap: 0.4rem;
   border-radius: var(--radius-pill);
-  padding: 11px 18px;
-  font: 600 14px/18px var(--font-sans);
+  min-height: 44px;
+  padding: 11px 22px;
+  font: 600 14px/20px var(--font-sans);
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
   white-space: nowrap;
   transition:
     background-color 150ms ease-out,
@@ -170,19 +187,19 @@ textarea.field {
   cursor: progress;
 }
 .btn-primary {
-  background: var(--forest);
-  color: var(--on-forest);
+  background: var(--action);
+  color: var(--on-action);
 }
 .btn-primary:hover:not(:disabled) {
-  filter: brightness(1.12);
+  background: #000;
 }
 .btn-quiet {
   background: transparent;
-  border-color: var(--control);
+  border-color: var(--ink);
   color: var(--ink);
 }
 .btn-quiet:hover:not(:disabled) {
-  background: var(--plaster);
+  background: var(--wash);
 }
 .btn-danger {
   background: transparent;
@@ -202,7 +219,7 @@ textarea.field {
   box-sizing: border-box;
   padding: 0 11px;
   border-radius: var(--radius-pill);
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
   font-size: 12px;
   font-weight: 600;
   line-height: 16px;
@@ -216,25 +233,34 @@ textarea.field {
   background: currentColor;
 }
 .tag-filed {
-  border-color: var(--forest);
-  color: var(--forest);
+  border-color: var(--ink);
+  color: var(--ink);
   background: transparent;
 }
+.tag-filed::before {
+  background: var(--good);
+}
 .tag-ready {
-  background: var(--forest);
-  color: var(--on-forest);
+  background: var(--action);
+  color: var(--on-action);
+}
+.tag-ready::before {
+  background: var(--ochre);
 }
 .tag-progress {
-  background: var(--forest-wash);
-  color: var(--forest);
+  background: var(--good-wash);
+  color: var(--ink);
+}
+.tag-progress::before {
+  background: var(--good);
 }
 .tag-review {
   background: var(--alert-wash);
   color: var(--alert);
 }
 .tag-research {
-  background: var(--plaster);
-  color: var(--muted);
+  background: var(--wash);
+  color: var(--ink);
 }
 .tag-research::before {
   background: transparent;
@@ -258,8 +284,9 @@ textarea.field {
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--control);
+  padding: 4px;
+  border: 0;
+  background: var(--wash);
   border-radius: var(--radius-pill);
   font-size: 14px;
 }
@@ -270,16 +297,16 @@ textarea.field {
   font-weight: 600;
 }
 .segmented button[aria-checked="true"] {
-  background: var(--forest);
-  color: var(--on-forest);
+  background: var(--sheet);
+  color: var(--ink);
 }
 .segmented button:not([aria-checked="true"]):hover {
   color: var(--ink);
-  background: var(--plaster);
 }
 
 a.link {
-  color: var(--forest);
+  color: var(--ink);
   text-decoration: underline;
+  text-decoration-color: var(--accent);
   text-underline-offset: 4px;
 }

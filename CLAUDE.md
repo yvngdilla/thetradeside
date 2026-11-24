@@ -87,22 +87,31 @@ the same code, so a fix lands everywhere at once.
   copying a component. A component that grows a boolean per caller is several
   components in one: use slots or split it.
 
-## Design system: "Signature"
+## Design system: "Studio"
 
-Source of truth: the Trade Side design system artifact on claude.ai
-(https://claude.ai/artifact/LePnsnAe4v4PgpJwbhAh19, `project/README.md` then
-`project/tokens.json`). Tokens live in `src/app/globals.css`.
+Warm, hand-made and clear. Decided 2026-11-23; it replaces "Signature". The
+design reference is the "Warm theme" page of the Trade Side redesign canvas on
+claude.ai (https://claude.ai/artifact/36Hd6LUuUJSvvEQ6yDB51A). Tokens live in
+`src/app/globals.css`.
 
-- Type: Instrument Serif (400, roman + italic) for headlines, page titles and
-  vendor names, with one key phrase per headline in italic. Instrument Sans
-  for everything read or clicked (body 15/24, lead 18/28).
-- Colour: style through tokens, never literal hex. Forest is brand and action.
-  Clay is only the pen stroke and small accents, **never text**. Alert means
-  "needs you".
-- Shape: buttons and status tags are pills; sheets and inputs 4px; hero panels
-  and colour blocks 2px. Borders, not shadows.
-- Status tags: Filed is a forest outline, Ready to file is solid forest,
-  Check details is alert on alert-wash.
+- Type: Fraunces in its soft cut (weight 400) for headlines, page titles and
+  vendor names. DM Sans for everything read or clicked (body 15/24). Caveat
+  (`.t-hand`) only for short handwritten notes: a label above a headline, an
+  aside beside a form. Never for instructions or anything a person must read.
+- Colour: style through tokens, never literal hex. Ink is the action colour
+  (primary buttons). Accent (terracotta) marks the active or key thing. Good
+  is success text. Alert means "needs you". The shape colours (terracotta,
+  sage, ochre, blush, sky) are for paper shapes and doodle fills, **never
+  text**.
+- Shape: buttons and status tags are pills; sheets 14px; inputs 10px. Borders,
+  not shadows.
+- Paper shapes and doodles: `PaperShape` sits behind the one main thing on a
+  screen. `Doodle` has twenty drawings; use one or two per screen, wide screens
+  only, and vary them between screens. `HandNote` is the handwritten aside.
+  All three are decorative and hidden from screen readers.
+- Status tags: Filed is an ink outline with a green dot, Ready to file is
+  solid ink with an ochre dot, Check details is alert on alert-wash.
+- No animation on the doodles or shapes.
 - Light theme only for now. Use tokens anyway so a dark theme can come later.
 
 ## Voice and email
@@ -111,6 +120,7 @@ Source of truth: the Trade Side design system artifact on claude.ai
   and copy. Use `APP_NAME` from `src/lib/brand.ts` in code.
 - Plain studio-manager tone, sentence case, no exclamation marks, no emoji,
   no em dashes. Tagline: "Resale certificates and trade accounts, filed once."
+  Homepage headline: "Trade accounts, without the paperwork."
 - **Never greet someone with a stand-in word** ("Hi there", "Hi friend"). If
   there is no name, the greeting is just `Hi,`. Render the name and its
   leading space together, or omit both.

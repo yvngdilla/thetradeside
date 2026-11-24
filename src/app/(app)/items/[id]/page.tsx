@@ -145,7 +145,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
                 {item.images.map((src) => (
                   <li key={src}>
                     <a href={src} target="_blank" rel="noreferrer" className="block">
-                      <ItemPhoto src={src} className={`aspect-square w-full ${src === item.image_url ? "outline outline-2 outline-forest outline-offset-2" : ""}`} />
+                      <ItemPhoto src={src} className={`aspect-square w-full ${src === item.image_url ? "outline outline-2 outline-ink outline-offset-2" : ""}`} />
                     </a>
                   </li>
                 ))}

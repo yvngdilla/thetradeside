@@ -1,3 +1,5 @@
+import { Doodle } from "@/components/doodle";
+import { HandArrow, HandNote, PaperShape } from "@/components/paper-shape";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createUserClient } from "@/lib/supabase/server";
@@ -47,6 +49,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
     <div>
       <AutoRefresh active={vendors.some((v) => v.status === "researching")} />
 
+      <Doodle name="certificate" className="hidden xl:block absolute -right-36 top-6 h-32 w-32 rotate-6" />
       <header>
         <h1 className="t-title">Vendors</h1>
         <p className="mt-2 text-muted max-w-prose">
@@ -55,7 +58,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
       </header>
 
       {setupDone ? null : (
-        <section aria-labelledby="setup-title" className="mt-8 rounded-md border border-rule bg-sheet">
+        <section aria-labelledby="setup-title" className="mt-8 sheet">
           <div className="flex items-center gap-2 px-5 pt-4 pb-3">
             <span aria-hidden className="h-2 w-2 rounded-full bg-alert" />
             <h2 id="setup-title" className="font-semibold">
@@ -80,7 +83,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
                     {step.action}
                   </Link>
                 ) : (
-                  <span className="text-sm text-forest font-semibold">Done</span>
+                  <span className="text-sm text-good font-semibold">Done</span>
                 )}
               </li>
             ))}
@@ -88,11 +91,18 @@ export default async function VendorsPage(props: PageProps<"/">) {
         </section>
       )}
 
-      <AddVendorForm />
+      <div className="relative mt-10">
+        <PaperShape tone="terracotta" className="-inset-x-[3%] -inset-y-[22%]" />
+        <HandNote className="-left-44 top-3 -rotate-6">
+          just the website
+          <HandArrow className="ml-14 mt-0.5" />
+        </HandNote>
+        <AddVendorForm />
+      </div>
 
       <section aria-label="Your vendors" className="mt-12">
         {vendors.length === 0 ? (
-          <div className="rounded-md border border-dashed border-control px-6 py-12 text-center">
+          <div className="rounded-[var(--radius-md)] border border-dashed border-control px-6 py-12 text-center">
             <p className="t-name">No vendors yet</p>
             <p className="mt-2 text-muted max-w-md mx-auto">
               Paste the website of a showroom or brand you buy from, like <span className="text-ink">visualcomfort.com</span>. Trade Side
@@ -108,7 +118,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
                     key={key}
                     href={key === "all" ? "/" : `/?show=${key}`}
                     aria-current={filter === key ? "page" : undefined}
-                    className={`pb-3 -mb-px border-b-2 ${filter === key ? "border-forest text-ink font-semibold" : "border-transparent text-muted hover:text-ink"}`}
+                    className={`pb-3 -mb-px border-b-2 ${filter === key ? "border-accent text-ink font-semibold" : "border-transparent text-muted hover:text-ink"}`}
                   >
                     {FILTERS[key].label} <span className="ml-0.5 text-muted font-normal tabular-nums">{counts[key]}</span>
                   </Link>
@@ -134,7 +144,7 @@ export default async function VendorsPage(props: PageProps<"/">) {
                       className="grid grid-cols-[1fr_auto] sm:grid-cols-[minmax(0,1fr)_9rem_9rem_7rem] items-center gap-x-6 gap-y-1 py-4 group"
                     >
                       <div className="min-w-0">
-                        <p className="t-name truncate group-hover:text-forest">{v.display_name || v.domain}</p>
+                        <p className="t-name truncate group-hover:text-accent">{v.display_name || v.domain}</p>
                         <p className="text-sm text-muted truncate">{v.domain}</p>
                       </div>
                       <div className="justify-self-end sm:justify-self-start">

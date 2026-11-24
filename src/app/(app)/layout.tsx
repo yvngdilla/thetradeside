@@ -9,17 +9,17 @@ import { isDemo } from "@/lib/demo/store";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ws = await getWorkspace();
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-dvh overflow-x-clip">
       {isDemo() ? (
-        <p className="bg-forest-wash text-forest text-sm text-center px-4 py-2">
+        <p className="bg-good-wash text-ink text-sm text-center px-4 py-2">
           Demo mode: sample firm and vendors. Nothing is saved for long, and no emails are sent.
         </p>
       ) : null}
-      <header className="border-b border-rule bg-paper/95 backdrop-blur sm:sticky sm:top-0 z-10">
+      <header className="border-b border-rule bg-paper/95 backdrop-blur sm:sticky sm:top-0 z-20">
         {/* Phones: logo and sign out on one row, the sections on a row below. From sm up: one row. */}
         <div className="mx-auto max-w-[960px] px-4 sm:px-8 pt-3 pb-2 sm:py-0 sm:h-16 flex flex-wrap sm:flex-nowrap items-center gap-x-3 sm:gap-x-6 gap-y-2">
           <Link href="/" aria-label="Trade Side, vendors" className="shrink-0">
-            <Wordmark className="h-6 sm:h-7 w-auto" />
+            <Wordmark className="text-[21px] sm:text-[23px]" />
           </Link>
           <nav aria-label="Main" className="order-last sm:order-none w-full sm:w-auto -mx-3 sm:mx-0 flex gap-1 text-sm">
             <NavLink href="/">Vendors</NavLink>
@@ -35,7 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-[960px] px-4 sm:px-8 py-8 sm:py-10">{children}</main>
+      <main className="relative mx-auto max-w-[960px] px-4 sm:px-8 py-8 sm:py-12">{children}</main>
       <SuggestFooter />
     </div>
   );

@@ -20,7 +20,7 @@ export function CopyText({ text }: { text: string }) {
         >
           Copy
         </button>
-        <span role="status" className="text-sm text-forest">
+        <span role="status" className="text-sm text-good">
           {copied ? "Copied" : ""}
         </span>
       </div>

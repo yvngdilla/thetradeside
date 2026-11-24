@@ -166,7 +166,7 @@ export function ItemForm({
                   <ItemPhoto
                     src={src}
                     alt={`Photo ${n + 1}`}
-                    className="aspect-square w-full peer-checked:outline peer-checked:outline-2 peer-checked:outline-forest peer-checked:outline-offset-2 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2"
+                    className="aspect-square w-full peer-checked:outline peer-checked:outline-2 peer-checked:outline-ink peer-checked:outline-offset-2 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2"
                   />
                 </label>
               ))}

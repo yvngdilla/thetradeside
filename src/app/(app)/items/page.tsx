@@ -1,3 +1,5 @@
+import { Doodle } from "@/components/doodle";
+import { HandArrow, HandNote, PaperShape } from "@/components/paper-shape";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createUserClient } from "@/lib/supabase/server";
@@ -34,6 +36,7 @@ export default async function ItemsPage() {
     <div>
       <AutoRefresh active={items.some((i) => i.status === "clipping")} />
 
+      <Doodle name="tag" className="hidden xl:block absolute -right-36 top-6 h-32 w-32" />
       <header>
         <h1 className="t-title">Items</h1>
         <p className="mt-2 text-muted max-w-prose">
@@ -42,11 +45,18 @@ export default async function ItemsPage() {
         </p>
       </header>
 
-      <AddItemForm projects={projects.map((p) => p.name)} />
+      <div className="relative mt-10">
+        <PaperShape tone="sky" cut={2} className="-inset-x-[3%] -inset-y-[20%]" />
+        <HandNote className="-left-44 top-5 -rotate-6">
+          paste, don&rsquo;t type
+          <HandArrow className="ml-14 mt-0.5" />
+        </HandNote>
+        <AddItemForm projects={projects.map((p) => p.name)} />
+      </div>
 
       <section aria-label="Your items" className="mt-12 space-y-12">
         {items.length === 0 ? (
-          <div className="rounded-md border border-dashed border-control px-6 py-12 text-center">
+          <div className="rounded-[var(--radius-md)] border border-dashed border-control px-6 py-12 text-center">
             <p className="t-name">No items yet</p>
             <p className="mt-2 text-muted max-w-md mx-auto">
               Find a piece on a vendor&rsquo;s site, copy the link from the address bar and paste it above. Each item is entered once and
@@ -69,7 +79,7 @@ export default async function ItemsPage() {
                       <Link href={`/items/${i.id}`} className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] sm:grid-cols-[3.5rem_minmax(0,1fr)_8rem_8rem] items-center gap-x-4 sm:gap-x-6 py-4 group">
                         <ItemPhoto src={i.image_url} className="h-14 w-14" />
                         <div className="min-w-0">
-                          <p className="font-semibold truncate group-hover:text-forest">{i.name || (i.status === "clipping" ? "Reading the page" : "Untitled item")}</p>
+                          <p className="font-semibold truncate group-hover:text-accent">{i.name || (i.status === "clipping" ? "Reading the page" : "Untitled item")}</p>
                           <p className="text-sm text-muted truncate">{[i.maker, i.room, from].filter(Boolean).join(" · ")}</p>
                         </div>
                         <p className="hidden sm:block text-sm text-right tabular-nums">{money(price.clientTotal, i.currency)}</p>
